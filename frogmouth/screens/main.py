@@ -18,11 +18,11 @@ from textual.screen import Screen
 from textual.widgets import Footer, Markdown
 
 from ..data import load_config, load_history, save_config, save_history
-from ..dialogs import ErrorDialog, HelpDialog, InputDialog
+from ..dialogs import ErrorDialog, HelpDialog
 from ..utility import is_likely_url, maybe_markdown
 from ..utility.advertising import APPLICATION_TITLE, PACKAGE_NAME
 from ..widgets import Navigation, Pathbar, Viewer
-from ..widgets.navigation_panes import Bookmarks, History, LocalFiles
+from ..widgets.navigation_panes import History, LocalFiles
 from ..widgets.navigation_panes.local_files import FilteredDirectoryTree
 
 
@@ -87,11 +87,8 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     BINDINGS = [
         Binding("c", "table_of_contents", "Contents", show=False),
         Binding("l", "local_files", "Local", show=False),
-        Binding("b", "bookmarks", "Bookmarks", show=False),
         Binding("h", "history", "History", show=False),
         Binding("e", "edit", "Edit", show=False),
-        Binding("ctrl+b", "bookmarks", "", show=False),
-        Binding("ctrl+d", "bookmark_this", "", show=False),
         Binding("ctrl+l", "local_files", "", show=False),
         Binding("ctrl+left", "backward", "", show=False),
         Binding("ctrl+right", "forward", "", show=False),
@@ -229,14 +226,6 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     def on_history_clear(self) -> None:
         """handle a request to clear down all of history."""
         self.query_one(Viewer).clear_history()
-
-    def on_bookmarks_goto(self, event: Bookmarks.Goto) -> None:
-        """Handle a request to go to a bookmark.
-
-        Args:
-            event: The event to handle.
-        """
-        self.visit(event.bookmark.location)
 
     def on_viewer_location_changed(self, event: Viewer.LocationChanged) -> None:
         """Update for the location being changed.
@@ -387,10 +376,6 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         """Display and focus the local files selection pane."""
         self.query_one(Navigation).jump_to_local_files()
 
-    def action_bookmarks(self) -> None:
-        """Display and focus the bookmarks selection pane."""
-        self.query_one(Navigation).jump_to_bookmarks()
-
     def action_history(self) -> None:
         """Display and focus the history pane."""
         self.query_one(Navigation).jump_to_history()
@@ -414,42 +399,6 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     def action_collapse_tree(self) -> None:
         """Collapse every directory in the local file tree."""
         self.query_one(Navigation).query_one(FilteredDirectoryTree).collapse_all()
-
-    def add_bookmark(self, location: Path | URL, bookmark: str) -> None:
-        """Handle adding the bookmark.
-
-        Args:
-            location: The location to bookmark.
-            bookmark: The bookmark to add.
-        """
-        if (bookmarks := self.query_one(Navigation).bookmarks) is not None:
-            bookmarks.add_bookmark(bookmark, location)
-
-    def action_bookmark_this(self) -> None:
-        """Add a bookmark for the currently-viewed file."""
-
-        location = self.query_one(Viewer).location
-
-        # Only allow bookmarking if we're actually viewing something that
-        # can be bookmarked.
-        if not isinstance(location, (Path, URL)):
-            self.app.push_screen(
-                ErrorDialog(
-                    "Not a bookmarkable location",
-                    "The current view can't be bookmarked.",
-                )
-            )
-            return
-
-        # To make a bookmark, we need a title and a location. We've got a
-        # location; let's make the filename the default title.
-        title = (location if isinstance(location, Path) else Path(location.path)).name
-
-        # Give the user a chance to edit the title.
-        self.app.push_screen(
-            InputDialog("Bookmark title:", title),
-            partial(self.add_bookmark, location),
-        )
 
     def action_toggle_theme(self) -> None:
         """Toggle the light/dark mode theme."""

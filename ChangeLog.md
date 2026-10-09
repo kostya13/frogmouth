@@ -44,6 +44,9 @@
 - Removed the "About" dialog (`f2`); version information now lives only in
   the help dialog and the package metadata.
 - Removed the now-unused `InformationDialog`.
+- Removed the bookmarks feature: the bookmarks pane, the `b`/`ctrl+b`
+  shortcuts, bookmarking the current document (`ctrl+d`), and the
+  `show_bookmarks` configuration option.
 
 ### Fixed
 

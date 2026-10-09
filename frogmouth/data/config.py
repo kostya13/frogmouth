@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from functools import lru_cache
 from json import dumps, loads
 from pathlib import Path
@@ -27,9 +27,6 @@ class Config:
 
     editor: str = ""
     """The external editor to use; empty means fall back to $EDITOR/vim."""
-
-    show_bookmarks: bool = False
-    """Should the bookmarks pane be shown in the navigation?"""
 
     wikipath: str = ""
     """Directory to open on startup; empty means fall back to ~/wiki."""
@@ -85,8 +82,10 @@ def load_config() -> Config:
         loaded from storage when necessary.
     """
     source_file = config_file()
-    return (
-        Config(**loads(source_file.read_text()))
-        if source_file.exists()
-        else save_config(Config())
-    )
+    if source_file.exists():
+        # Ignore any options in the file we don't know about; this keeps
+        # older configuration files working after an option is removed.
+        known = {f.name for f in fields(Config)}
+        stored = loads(source_file.read_text())
+        return Config(**{k: v for k, v in stored.items() if k in known})
+    return save_config(Config())

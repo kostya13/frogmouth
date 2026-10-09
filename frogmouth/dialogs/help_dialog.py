@@ -28,7 +28,6 @@ Welcome to {APPLICATION_TITLE} Help!
 | -- | -- |
 | `Escape` | Hide the navigation / quit |
 | `Ctrl+n` | Show/hide the navigation |
-| `Ctrl+b` | Show the bookmarks |
 | `Ctrl+l` | Show the local file browser |
 | `Ctrl+t` | Show the table of contents |
 | `Ctrl+y` | Show the history |
@@ -36,7 +35,6 @@ Welcome to {APPLICATION_TITLE} Help!
 | `Ctrl+right` | Go forward in history |
 | `c` | Show the table of contents |
 | `l` | Show the local file browser |
-| `b` | Show the bookmarks |
 | `h` | Show the history |
 | `+` | Expand the whole local file tree |
 | `_` | Collapse the whole local file tree |
@@ -46,7 +44,6 @@ Welcome to {APPLICATION_TITLE} Help!
 
 | Key | Command |
 | -- | -- |
-| `Ctrl+d` | Add the current document to the bookmarks |
 | `Ctrl+r` | Reload the current document |
 | `Ctrl+e` | Edit the current document in an external editor |
 | `Ctrl+q` | Quit the application |

@@ -13,7 +13,6 @@ from textual.widgets import TabbedContent, Tabs
 from typing_extensions import Self
 
 from ..data import load_config, save_config
-from .navigation_panes.bookmarks import Bookmarks
 from .navigation_panes.history import History
 from .navigation_panes.local_files import LocalFiles
 from .navigation_panes.navigation_pane import NavigationPane
@@ -69,9 +68,6 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
             self._tabs = tabs
             yield self._local_files
             yield self._contents
-            if load_config().show_bookmarks:
-                self._bookmarks = Bookmarks()
-                yield self._bookmarks
             yield self._history
 
     def on_mount(self) -> None:
@@ -106,11 +102,6 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         return self._local_files
 
     @property
-    def bookmarks(self) -> Bookmarks | None:
-        """The bookmarks widget, if it is shown; `None` if hidden."""
-        return getattr(self, "_bookmarks", None)
-
-    @property
     def history(self) -> History:
         """The history widget."""
         return self._history
@@ -128,19 +119,6 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         if target is not None:
             self._local_files.chdir(target)
         self._local_files.activate()
-        self.call_after_refresh(self.focus_tab)
-        return self
-
-    def jump_to_bookmarks(self) -> Self:
-        """Switch to and focus the bookmarks pane, if it is shown.
-
-        Returns:
-            Self.
-        """
-        if getattr(self, "_bookmarks", None) is None:
-            return self
-        self.popped_out = True
-        self._bookmarks.activate()
         self.call_after_refresh(self.focus_tab)
         return self
 

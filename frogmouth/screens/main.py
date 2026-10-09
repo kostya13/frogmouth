@@ -116,7 +116,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Binding("ctrl+l", "local_files", "", show=False),
         Binding("ctrl+left", "backward", "", show=False),
         Binding("ctrl+right", "forward", "", show=False),
-        Binding("ctrl+e", "edit", "", show=False),
+        Binding("ctrl+e", "edit", "Ctrl+e: Editor"),
         Binding("ctrl+r", "reload", "", show=False),
         Binding("ctrl+t", "table_of_contents", "", show=False),
         Binding("ctrl+f", "full_screen", "Full screen"),

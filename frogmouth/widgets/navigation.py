@@ -32,7 +32,7 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
 
     Navigation > LocalFiles {
         height: 100%;
-        border: blank;
+        border: round $panel-lighten-2;
         padding: 0 !important;
     }
     """

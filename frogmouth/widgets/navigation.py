@@ -25,7 +25,7 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
 
     DEFAULT_CSS = """
     Navigation {
-        width: 44;
+        width: 34;
         background: $panel;
         display: block;
         dock: left;

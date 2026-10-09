@@ -15,7 +15,11 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import Input, Label, Markdown
-from textual.widgets._markdown import MarkdownBlock
+from textual.widgets._markdown import (
+    MarkdownBlock,
+    MarkdownTable,
+    MarkdownTableContent,
+)
 from textual.message import Message
 from textual.reactive import var
 from typing_extensions import Final
@@ -239,14 +243,39 @@ class Viewer(VerticalScroll, can_focus=True, can_focus_children=True):
         matches: list[MarkdownBlock] = []
         if term:
             for block in self.document.query(MarkdownBlock):
-                if term in block.render().plain.lower():
+                if term in self._block_text(block).lower():
                     matches.append(block)
         return matches
+
+    def _block_text(self, block: MarkdownBlock) -> str:
+        """Get the plain text of a document block.
+
+        Tables are rendered as rich tables; their text comes from the
+        header and row cells.
+
+        Args:
+            block: The block to get the text of.
+
+        Returns:
+            The plain text of the block.
+        """
+        if isinstance(block, MarkdownTable):
+            return " ".join(
+                cell.plain
+                for table in block.query(MarkdownTableContent)
+                for cell in [
+                    *table.headers,
+                    *(cell for row in table.rows for cell in row),
+                ]
+            )
+        return block.render().plain
 
     def action_search(self) -> None:
         """Show the search bar and focus it."""
         self.query_one("#search-bar").add_class("visible")
-        self.query_one("#search-input", Input).focus()
+        self.call_after_refresh(
+            lambda: self.query_one("#search-input", Input).focus()
+        )
 
     def hide_search(self) -> None:
         """Hide the search bar and return focus to the viewer."""

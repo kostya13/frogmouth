@@ -422,7 +422,8 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             location: The location to bookmark.
             bookmark: The bookmark to add.
         """
-        self.query_one(Navigation).bookmarks.add_bookmark(bookmark, location)
+        if (bookmarks := self.query_one(Navigation).bookmarks) is not None:
+            bookmarks.add_bookmark(bookmark, location)
 
     def action_bookmark_this(self) -> None:
         """Add a bookmark for the currently-viewed file."""

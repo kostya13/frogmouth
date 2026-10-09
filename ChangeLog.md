@@ -29,6 +29,9 @@
 - Full screen mode on `ctrl+f`: the viewer takes over the whole screen,
   without the pathbar, navigation, footer or margins; `Escape` (or
   `ctrl+f` again) returns to the normal view.
+- The bookmarks pane can now be hidden: `show_bookmarks` in the
+  configuration file controls whether the pane appears in the navigation
+  (default: hidden).
 
 ### Removed
 

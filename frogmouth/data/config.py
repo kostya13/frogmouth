@@ -28,6 +28,9 @@ class Config:
     editor: str = ""
     """The external editor to use; empty means fall back to $EDITOR/vim."""
 
+    show_bookmarks: bool = False
+    """Should the bookmarks pane be shown in the navigation?"""
+
     wikipath: str = ""
     """Directory to open on startup; empty means fall back to ~/wiki."""
 

@@ -64,13 +64,14 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         # pylint:disable=attribute-defined-outside-init
         self._contents = TableOfContents()
         self._local_files = LocalFiles()
-        self._bookmarks = Bookmarks()
         self._history = History()
         with TabbedContent() as tabs:
             self._tabs = tabs
             yield self._contents
             yield self._local_files
-            yield self._bookmarks
+            if load_config().show_bookmarks:
+                self._bookmarks = Bookmarks()
+                yield self._bookmarks
             yield self._history
 
     def on_mount(self) -> None:
@@ -105,9 +106,9 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         return self._local_files
 
     @property
-    def bookmarks(self) -> Bookmarks:
-        """The bookmarks widget."""
-        return self._bookmarks
+    def bookmarks(self) -> Bookmarks | None:
+        """The bookmarks widget, if it is shown; `None` if hidden."""
+        return getattr(self, "_bookmarks", None)
 
     @property
     def history(self) -> History:
@@ -131,11 +132,13 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         return self
 
     def jump_to_bookmarks(self) -> Self:
-        """Switch to and focus the bookmarks pane.
+        """Switch to and focus the bookmarks pane, if it is shown.
 
         Returns:
             Self.
         """
+        if getattr(self, "_bookmarks", None) is None:
+            return self
         self.popped_out = True
         self._bookmarks.activate()
         self.call_after_refresh(self.focus_tab)

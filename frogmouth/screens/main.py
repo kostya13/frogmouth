@@ -148,7 +148,9 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         yield Pathbar()
         with Horizontal(id="viewer-host"):
             yield Navigation()
-            yield Viewer(classes="focusable")
+            viewer = Viewer(classes="focusable")
+            viewer.border_title = "[2] View"
+            yield viewer
             yield TableOfContents()
         yield Footer()
 

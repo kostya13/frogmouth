@@ -10,13 +10,14 @@ from webbrowser import open as open_url
 from httpx import URL, AsyncClient, HTTPStatusError, RequestError
 from markdown_it import MarkdownIt
 from mdit_py_plugins import front_matter
-from textual import work
+from textual import events, work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import VerticalScroll
+from textual.containers import Horizontal, VerticalScroll
+from textual.widgets import Input, Label, Markdown
+from textual.widgets._markdown import MarkdownBlock
 from textual.message import Message
 from textual.reactive import var
-from textual.widgets import Markdown
 from typing_extensions import Final
 
 from .. import __version__
@@ -131,6 +132,30 @@ class Viewer(VerticalScroll, can_focus=True, can_focus_children=True):
     Viewer Markdown {
         margin: 0 0 1 1;
     }
+
+    #search-bar {
+        height: 1;
+        dock: bottom;
+        display: none;
+    }
+
+    #search-bar.visible {
+        display: block;
+    }
+
+    #search-bar Input {
+        width: 1fr;
+        height: 1;
+        border: none;
+        padding: 0;
+    }
+
+    #search-bar Label {
+        width: auto;
+        height: 1;
+        padding: 0 1;
+        color: $text-muted;
+    }
     """
 
     BINDINGS = [
@@ -138,6 +163,7 @@ class Viewer(VerticalScroll, can_focus=True, can_focus_children=True):
         Binding("s,j", "scroll_down", "", show=False),
         Binding("space", "page_down", "", show=False),
         Binding("b", "page_up", "", show=False),
+        Binding("slash", "search", "Search", show=False),
     ]
     """Bindings for the Markdown viewer widget."""
 
@@ -146,6 +172,12 @@ class Viewer(VerticalScroll, can_focus=True, can_focus_children=True):
 
     viewing_location: var[bool] = var(False)
     """Is an actual location being viewed?"""
+
+    _matches: list[MarkdownBlock] = []
+    """The current search match blocks."""
+
+    _match_index: int = 0
+    """The index of the currently shown search match."""
 
     class ViewerMessage(Message):
         """Base class for viewer messages."""
@@ -174,6 +206,9 @@ class Viewer(VerticalScroll, can_focus=True, can_focus_children=True):
                 front_matter.front_matter_plugin
             ),
         )
+        with Horizontal(id="search-bar"):
+            yield Input(placeholder="Search…", id="search-input")
+            yield Label("", id="search-status")
 
     @property
     def document(self) -> Markdown:
@@ -192,6 +227,82 @@ class Viewer(VerticalScroll, can_focus=True, can_focus_children=True):
             block_id: The ID of the block to scroll to.
         """
         self.scroll_to_widget(self.document.query_one(f"#{block_id}"), top=True)
+
+    @property
+    def _search_matches(self) -> list[MarkdownBlock]:
+        """The document blocks that match the search term.
+
+        Returns:
+            The list of matching blocks.
+        """
+        term = self.query_one("#search-input", Input).value.lower()
+        matches: list[MarkdownBlock] = []
+        if term:
+            for block in self.document.query(MarkdownBlock):
+                if term in block.render().plain.lower():
+                    matches.append(block)
+        return matches
+
+    def action_search(self) -> None:
+        """Show the search bar and focus it."""
+        self.query_one("#search-bar").add_class("visible")
+        self.query_one("#search-input", Input).focus()
+
+    def hide_search(self) -> None:
+        """Hide the search bar and return focus to the viewer."""
+        self.query_one("#search-bar").remove_class("visible")
+        self.focus()
+
+    def _goto_match(
+        self, index: int, count: int, matches: list[MarkdownBlock]
+    ) -> None:
+        """Show the given match and update the match counter.
+
+        Args:
+            index: The index of the match to show.
+            count: The total number of matches.
+            matches: The list of matching blocks.
+        """
+        self.query_one("#search-status", Label).update(
+            f"{index + 1}/{count}" if count else "0/0"
+        )
+        if matches:
+            self.scroll_to_widget(matches[index], top=True)
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle the search term being changed.
+
+        Args:
+            event: The input change event.
+        """
+        if event.input.id == "search-input":
+            self._matches = self._search_matches
+            if self._matches:
+                self._goto_match(0, len(self._matches), self._matches)
+            else:
+                self.query_one("#search-status", Label).update("0/0")
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle Enter in the search input: next match.
+
+        Args:
+            event: The submit event.
+        """
+        if event.input.id == "search-input" and self._matches:
+            self._match_index = (self._match_index + 1) % len(self._matches)
+            self._goto_match(
+                self._match_index, len(self._matches), self._matches
+            )
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle keys pressed while the search bar is visible."""
+        if (
+            event.key == "escape"
+            and self.query_one("#search-bar").has_class("visible")
+        ):
+            self.hide_search()
+            event.stop()
+            event.prevent_default()
 
     def _post_load(self, location: Path | URL, remember: bool = True) -> None:
         """Perform some post-load tasks.

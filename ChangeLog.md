@@ -34,6 +34,8 @@
   (default: hidden).
 - The indentation of the table of contents tree is now two characters
   per level instead of four.
+- Search in the viewer on `/`: type a term, Enter cycles through the
+  matching blocks, Escape closes the search bar.
 
 ### Removed
 

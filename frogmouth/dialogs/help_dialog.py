@@ -30,7 +30,7 @@ Welcome to {APPLICATION_TITLE} Help!
 | `Ctrl+n` | Show/hide the navigation |
 | `Ctrl+l` | Show the local file browser |
 | `Ctrl+t` | Show the table of contents |
-| `Ctrl+y`, `Ctrl+h` | Show the history dialog |
+| `Ctrl+y` | Show the history dialog |
 | `Ctrl+left` | Go backward in history |
 | `Ctrl+right` | Go forward in history |
 | `c` | Show the table of contents |

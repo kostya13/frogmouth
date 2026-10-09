@@ -111,7 +111,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Binding("3", "focus_toc", "3: Contents", show=False),
         Binding("c", "table_of_contents", "Contents", show=False),
         Binding("t", "local_files", "Local", show=False),
-        Binding("ctrl+h,h", "history", "History"),
+        Binding("h", "history", "History"),
         Binding("e", "edit", "Edit", show=False),
         Binding("ctrl+l", "local_files", "", show=False),
         Binding("ctrl+left", "backward", "", show=False),

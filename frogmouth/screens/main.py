@@ -105,9 +105,12 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     """
 
     BINDINGS = [
+        Binding("1", "focus_local_files", "1: Tree", show=False),
+        Binding("2", "focus_viewer", "2: Viewer", show=False),
+        Binding("3", "focus_toc", "3: Contents", show=False),
         Binding("c", "table_of_contents", "Contents", show=False),
         Binding("l", "local_files", "Local", show=False),
-        Binding("h", "history", "History", show=False),
+        Binding("h", "history", "h: History"),
         Binding("e", "edit", "Edit", show=False),
         Binding("ctrl+l", "local_files", "", show=False),
         Binding("ctrl+left", "backward", "", show=False),
@@ -401,6 +404,18 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     def action_local_files(self) -> None:
         """Display and focus the local files selection pane."""
         self.query_one(Navigation).jump_to_local_files()
+
+    def action_focus_local_files(self) -> None:
+        """Focus the local files tree."""
+        self.query_one(Navigation).jump_to_local_files()
+
+    def action_focus_viewer(self) -> None:
+        """Focus the viewer."""
+        self.query_one(Viewer).focus()
+
+    def action_focus_toc(self) -> None:
+        """Focus the table of contents tree."""
+        self.query_one(TableOfContents).set_focus_within()
 
     def action_history(self) -> None:
         """Show the history dialog."""

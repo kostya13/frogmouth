@@ -353,28 +353,31 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         """Toggle the availability of the navigation sidebar."""
         self.query_one(Navigation).toggle()
 
-    def action_full_screen(self) -> None:
-        """Toggle full screen viewing of the document."""
+    def _set_full_screen(self, full_screen: bool) -> None:
+        """Turn full screen viewing of the document on or off.
+
+        Args:
+            full_screen: Should the viewer take over the whole screen?
+        """
         host = self.query_one("#viewer-host")
-        host.toggle_class("full-screen")
-        full_screen = host.has_class("full-screen")
+        host.set_class(full_screen, "full-screen")
         self.query_one(Pathbar).set_class(full_screen, "full-screen-hidden")
         self.query_one(Footer).set_class(full_screen, "full-screen-hidden")
 
+    def action_full_screen(self) -> None:
+        """Toggle full screen viewing of the document."""
+        self._set_full_screen(
+            not self.query_one("#viewer-host").has_class("full-screen")
+        )
+
     def action_escape(self) -> None:
         """Process the escape key."""
-        # Escape is designed to work backwards out of the application: it
-        # first leaves full screen, then hides the navigation if it's
-        # focused, and only then exits the application. The idea being
-        # that folk who use this often want to build up muscle memory on
-        # the keyboard will know to camp on the escape key until they get
-        # to where they want to be.
+        # Escape only leaves full screen mode; it never exits the
+        # application. If the navigation is focused it gets hidden.
         if self.query_one("#viewer-host").has_class("full-screen"):
-            self.query_one("#viewer-host").remove_class("full-screen")
+            self._set_full_screen(False)
         elif self.query("Navigation:focus-within"):
             self.query_one(Navigation).popped_out = False
-        else:
-            self.app.exit()
 
     def action_table_of_contents(self) -> None:
         """Display and focus the table of contents pane."""

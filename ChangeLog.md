@@ -43,6 +43,8 @@
 - Fixed a crash when switching navigation tabs while focus is inside the
   navigation sidebar (`focus_tab` looked up panes by the tab ID, which
   carries a `--content-tab-` prefix in Textual 0.53).
+- `Escape` no longer exits the application: it only leaves full screen
+  mode (or hides the focused navigation pane). Use `ctrl+q` to quit.
 - The `l` and `h` keys no longer switch navigation tabs when focus is
   inside the navigation; they now always reach the main screen
   `local_files`/`history` shortcuts.

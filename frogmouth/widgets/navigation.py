@@ -67,8 +67,8 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         self._history = History()
         with TabbedContent() as tabs:
             self._tabs = tabs
-            yield self._contents
             yield self._local_files
+            yield self._contents
             if load_config().show_bookmarks:
                 self._bookmarks = Bookmarks()
                 yield self._bookmarks

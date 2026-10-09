@@ -22,7 +22,7 @@ from ..dialogs import ErrorDialog, HelpDialog
 from ..utility import is_likely_url, maybe_markdown
 from ..utility.advertising import APPLICATION_TITLE, PACKAGE_NAME
 from ..widgets import Navigation, Pathbar, Viewer
-from ..widgets.navigation_panes import History, LocalFiles
+from ..widgets.navigation_panes import History, LocalFiles, TableOfContents
 from ..widgets.navigation_panes.local_files import FilteredDirectoryTree
 
 
@@ -58,6 +58,21 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         height: 1fr;
     }
 
+    #viewer-host TableOfContents {
+        dock: right;
+        width: 20;
+        background: $panel;
+        border: blank;
+    }
+
+    #viewer-host TableOfContents:focus {
+        border: heavy $accent !important;
+    }
+
+    #viewer-host TableOfContents > MarkdownTableOfContents {
+        height: 100%;
+    }
+
     /* Full screen mode: the viewer takes over the whole screen. */
     #viewer-host.full-screen {
         width: 100%;
@@ -66,7 +81,8 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         layer: fullscreen;
     }
 
-    #viewer-host.full-screen Navigation {
+    #viewer-host.full-screen Navigation,
+    #viewer-host.full-screen TableOfContents {
         display: none;
     }
 
@@ -125,6 +141,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         with Horizontal(id="viewer-host"):
             yield Navigation()
             yield Viewer(classes="focusable")
+            yield TableOfContents()
         yield Footer()
 
     def visit(self, location: Path | URL, remember: bool = True) -> None:
@@ -264,9 +281,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Args:
             event: The table of contents update event to handle.
         """
-        # We don't handle this, the navigation pane does. Bounce the event
-        # over there.
-        self.query_one(Navigation).table_of_contents.on_table_of_contents_updated(event)
+        self.query_one(TableOfContents).on_table_of_contents_updated(event)
 
     def on_markdown_table_of_contents_selected(
         self, event: Markdown.TableOfContentsSelected
@@ -369,8 +384,8 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             self.query_one(Navigation).popped_out = False
 
     def action_table_of_contents(self) -> None:
-        """Display and focus the table of contents pane."""
-        self.query_one(Navigation).jump_to_contents()
+        """Focus the table of contents pane."""
+        self.query_one(TableOfContents).set_focus_within()
 
     def action_local_files(self) -> None:
         """Display and focus the local files selection pane."""

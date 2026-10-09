@@ -36,6 +36,9 @@
   per level instead of four.
 - Search in the viewer on `/`: type a term, Enter cycles through the
   matching blocks, Escape closes the search bar.
+- The table of contents pane moved out of the navigation sidebar to a
+  separate panel docked on the right, 20 characters wide; it updates as
+  documents are opened and `c`/`ctrl+t` focus it.
 
 ### Removed
 

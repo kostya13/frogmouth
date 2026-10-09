@@ -16,7 +16,6 @@ from ..data import load_config, save_config
 from .navigation_panes.history import History
 from .navigation_panes.local_files import LocalFiles
 from .navigation_panes.navigation_pane import NavigationPane
-from .navigation_panes.table_of_contents import TableOfContents
 
 
 class Navigation(Vertical, can_focus=False, can_focus_children=True):
@@ -61,13 +60,11 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         """Compose the content of the navigation pane."""
         self.popped_out = False
         # pylint:disable=attribute-defined-outside-init
-        self._contents = TableOfContents()
         self._local_files = LocalFiles()
         self._history = History()
         with TabbedContent() as tabs:
             self._tabs = tabs
             yield self._local_files
-            yield self._contents
             yield self._history
 
     def on_mount(self) -> None:
@@ -90,11 +87,6 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
     def watch_docked_left(self) -> None:
         """Watch for changes to the left-docking status."""
         self.styles.dock = "left" if self.docked_left else "right"
-
-    @property
-    def table_of_contents(self) -> TableOfContents:
-        """The table of contents widget."""
-        return self._contents
 
     @property
     def local_files(self) -> LocalFiles:
@@ -130,17 +122,6 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         """
         self.popped_out = True
         self._history.activate()
-        self.call_after_refresh(self.focus_tab)
-        return self
-
-    def jump_to_contents(self) -> Self:
-        """Switch to and focus the table of contents pane.
-
-        Returns:
-            Self.
-        """
-        self.popped_out = True
-        self._contents.activate()
         self.call_after_refresh(self.focus_tab)
         return self
 

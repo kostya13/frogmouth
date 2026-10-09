@@ -36,6 +36,7 @@ class TableOfContents(NavigationPane):
     def __init__(self) -> None:
         """Initialise the table of contents navigation pane."""
         super().__init__("[C]ontents")
+        self.border_title = "Contents"
 
     def set_focus_within(self) -> None:
         """Ensure the tree in the table of contents is focused."""

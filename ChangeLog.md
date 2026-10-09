@@ -39,8 +39,7 @@
 - The table of contents pane moved out of the navigation sidebar to a
   separate panel docked on the right, 20 characters wide; it updates as
   documents are opened and `c`/`ctrl+t` focus it.
-- The navigation sidebar has no padding, and `tab` in the viewer now
-  moves focus to it.
+- The navigation sidebar has no padding.
 - The history is now a dialog on `h`/`ctrl+y`: pick a location to visit
   it; `delete` removes an entry, `backspace` clears the history.
   The navigation sidebar is now just the local files tree.

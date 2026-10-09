@@ -103,6 +103,3 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         save_config(config)
         self.docked_left = config.navigation_left
 
-    def focus_tab(self) -> None:
-        """Focus the navigation pane's content."""
-        self._local_files.set_focus_within()

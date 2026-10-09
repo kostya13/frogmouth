@@ -73,6 +73,10 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         height: 100%;
     }
 
+    #viewer-host Viewer {
+        border: round $panel-lighten-2;
+    }
+
     /* Full screen mode: the viewer takes over the whole screen. */
     #viewer-host.full-screen {
         width: 100%;
@@ -389,10 +393,6 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             self._set_full_screen(False)
         elif self.query("Navigation:focus-within"):
             self.query_one(Navigation).popped_out = False
-
-    def action_focus_navigation(self) -> None:
-        """Move focus to the navigation sidebar."""
-        self.query_one(Navigation).focus_tab()
 
     def action_table_of_contents(self) -> None:
         """Focus the table of contents pane."""

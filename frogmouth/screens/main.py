@@ -273,6 +273,16 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         self.query_one(Pathbar).location = Pathbar.display_text(
             event.viewer.location
         )
+        # Show the name of the file that is open in the viewer's title.
+        location = event.viewer.location
+        if location is None:
+            name = ""
+        elif isinstance(location, Path):
+            name = location.name
+        else:
+            name = Path(location.path).name
+        viewer = self.query_one(Viewer)
+        viewer.border_title = f"[2] View: {name}" if name else "[2] View"
         # If the newly-arrived-at location is a local file, reveal it within
         # the local files tree.
         if isinstance(event.viewer.location, Path):
@@ -280,7 +290,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             tree.call_after_refresh(tree.reveal, event.viewer.location)
         # Having safely arrived at a new location, that implies that we want
         # to focus on the viewer.
-        self.query_one(Viewer).focus()
+        viewer.focus()
 
     def on_viewer_history_updated(self, event: Viewer.HistoryUpdated) -> None:
         """Handle the viewer updating the history.

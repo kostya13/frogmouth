@@ -59,8 +59,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     }
 
     #viewer-host TableOfContents {
-        dock: right;
-        width: 20;
+        width: 25;
         background: $panel;
         border: blank;
         padding: 0 !important;

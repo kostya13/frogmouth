@@ -1,20 +1,21 @@
-"""Provides the history navigation pane."""
+"""Provides a dialog for browsing and selecting from the visit history."""
 
 from __future__ import annotations
 
 from functools import partial
+from httpx import URL
 from pathlib import Path
 
-from httpx import URL
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
+from textual.containers import Vertical
 from textual.message import Message
+from textual.screen import ModalScreen
 from textual.widgets import OptionList
 from textual.widgets.option_list import Option
 
-from ...dialogs import YesNoDialog
-from .navigation_pane import NavigationPane
+from .yes_no_dialog import YesNoDialog
 
 
 class Entry(Option):
@@ -31,7 +32,7 @@ class Entry(Option):
         self.history_id = history_id
         """The ID of the item of history."""
         self.location = location
-        """The location for his entry in the history."""
+        """The location for this entry in the history."""
 
     @staticmethod
     def _as_prompt(location: Path | URL) -> Text:
@@ -55,92 +56,83 @@ class Entry(Option):
         )
 
 
-class History(NavigationPane):
-    """History navigation pane."""
+class HistoryDialog(ModalScreen[None]):
+    """Modal dialog that shows the visit history."""
 
     DEFAULT_CSS = """
-    History {
-        height: 100%;
+    HistoryDialog {
+        align: center middle;
     }
 
-    History > OptionList {
-        background: $panel;
-        border: none;
+    HistoryDialog > Vertical {
+        border: thick $primary 50%;
+        width: 60%;
+        height: 80%;
+        background: $boost;
+    }
+
+    HistoryDialog > Vertical > OptionList {
         height: 1fr;
-        scrollbar-size: 1 1;
-    }
-
-    History > OptionList:focus {
-        border: none;
+        margin: 1 2;
     }
     """
 
     BINDINGS = [
+        Binding("escape", "dismiss(None)", "", show=False),
         Binding("delete", "delete", "Delete the history item"),
-        Binding("backspace", "clear", "Clean the history"),
+        Binding("backspace", "clear", "Clear the history"),
     ]
-    """The bindings for the history navigation pane."""
-
-    def __init__(self) -> None:
-        """Initialise the history navigation pane."""
-        super().__init__("[H]istory")
-
-    def compose(self) -> ComposeResult:
-        """Compose the child widgets."""
-        yield OptionList()
-
-    def set_focus_within(self) -> None:
-        """Focus the option list."""
-        self.query_one(OptionList).focus(scroll_visible=False)
-
-    def update_from(self, locations: list[Path | URL]) -> None:
-        """Update the history from the given list of locations.
-
-        Args:
-            locations: A list of locations to update the history with.
-
-        This call removes any existing history and sets it to the given
-        value.
-        """
-        option_list = self.query_one(OptionList).clear_options()
-        for history_id, location in reversed(list(enumerate(locations))):
-            option_list.add_option(Entry(history_id, location))
-
-    class Goto(Message):
-        """Message that requests the viewer goes to a given location."""
-
-        def __init__(self, location: Path | URL) -> None:
-            """Initialise the history goto message.
-
-            Args:
-                location: The location to go to.
-            """
-            super().__init__()
-            self.location = location
-            """The location to go to."""
-
-    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
-        """Handle an entry in the history being selected.
-
-        Args:
-            event: The event to handle.
-        """
-        event.stop()
-        assert isinstance(event.option, Entry)
-        self.post_message(self.Goto(event.option.location))
+    """Bindings for the history dialog."""
 
     class Delete(Message):
         """Message that requests the viewer to delete an item of history."""
 
         def __init__(self, history_id: int) -> None:
-            """initialise the history delete message.
+            """Initialise the history delete message.
 
-            args:
+            Args:
                 history_id: The ID of the item of history to delete.
             """
             super().__init__()
             self.history_id = history_id
             """The ID of the item of history to delete."""
+
+    class Clear(Message):
+        """Message that requests that the history be cleared."""
+
+    def __init__(self, locations: list[Path | URL]) -> None:
+        """Initialise the history dialog.
+
+        Args:
+            locations: The locations in the history.
+        """
+        super().__init__()
+        self._locations = locations
+
+    def compose(self) -> ComposeResult:
+        """Compose the child widgets."""
+        with Vertical():
+            yield OptionList()
+
+    def on_mount(self) -> None:
+        """Populate the option list once the DOM is set up."""
+        option_list = self.query_one(OptionList)
+        for history_id, location in reversed(list(enumerate(self._locations))):
+            option_list.add_option(Entry(history_id, location))
+        if option_list.option_count:
+            option_list.highlighted = 0
+        option_list.focus()
+
+    def on_option_list_option_selected(
+        self, event: OptionList.OptionSelected
+    ) -> None:
+        """Handle an entry in the history being selected.
+
+        Args:
+            event: The event to handle.
+        """
+        assert isinstance(event.option, Entry)
+        self.dismiss(event.option.location)
 
     def delete_history(self, history_id: int, delete_it: bool) -> None:
         """Delete a given history entry.
@@ -164,9 +156,6 @@ class History(NavigationPane):
                 ),
                 partial(self.delete_history, entry.history_id),
             )
-
-    class Clear(Message):
-        """Message that requests that the history be cleared."""
 
     def clear_history(self, clear_it: bool) -> None:
         """Perform a history clear.

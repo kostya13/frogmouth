@@ -9,13 +9,10 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.message import Message
 from textual.reactive import var
-from textual.widgets import TabbedContent, Tabs
 from typing_extensions import Self
 
 from ..data import load_config, save_config
-from .navigation_panes.history import History
 from .navigation_panes.local_files import LocalFiles
-from .navigation_panes.navigation_pane import NavigationPane
 
 
 class Navigation(Vertical, can_focus=False, can_focus_children=True):
@@ -33,23 +30,12 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         display: none;
     }
 
-    TabbedContent {
-        height: 100% !important;
-        scrollbar-size: 1 1;
-    }
-
-    TabPane {
-        padding: 0 !important;
-    }
-
-    ContentSwitcher {
-        height: 1fr !important;
+    Navigation > LocalFiles {
+        height: 100%;
     }
     """
 
     BINDINGS = [
-        Binding("comma,a,ctrl+left,shift+left", "previous_tab", "", show=False),
-        Binding("full_stop,d,ctrl+right,shift+right", "next_tab", "", show=False),
         Binding("\\", "toggle_dock", "Dock left/right"),
     ]
     """Bindings local to the navigation pane."""
@@ -65,11 +51,7 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         self.popped_out = False
         # pylint:disable=attribute-defined-outside-init
         self._local_files = LocalFiles()
-        self._history = History()
-        with TabbedContent() as tabs:
-            self._tabs = tabs
-            yield self._local_files
-            yield self._history
+        yield self._local_files
 
     def on_mount(self) -> None:
         """Configure navigation once the DOM is set up."""
@@ -97,11 +79,6 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         """The local files widget."""
         return self._local_files
 
-    @property
-    def history(self) -> History:
-        """The history widget."""
-        return self._history
-
     def jump_to_local_files(self, target: Path | None = None) -> Self:
         """Switch to and focus the local files pane.
 
@@ -114,30 +91,8 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         self.popped_out = True
         if target is not None:
             self._local_files.chdir(target)
-        self._local_files.activate()
-        self.call_after_refresh(self.focus_tab)
+        self._local_files.set_focus_within()
         return self
-
-    def jump_to_history(self) -> Self:
-        """Switch to and focus the history pane.
-
-        Returns:
-            Self.
-        """
-        self.popped_out = True
-        self._history.activate()
-        self.call_after_refresh(self.focus_tab)
-        return self
-
-    def action_previous_tab(self) -> None:
-        """Switch to the previous tab in the navigation pane."""
-        self.query_one(Tabs).action_previous_tab()
-        self.call_after_refresh(self.focus_tab)
-
-    def action_next_tab(self) -> None:
-        """Switch to the next tab in the navigation pane."""
-        self.query_one(Tabs).action_next_tab()
-        self.call_after_refresh(self.focus_tab)
 
     def action_toggle_dock(self) -> None:
         """Toggle the dock side for the navigation."""
@@ -147,8 +102,5 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         self.docked_left = config.navigation_left
 
     def focus_tab(self) -> None:
-        """Focus the currently active tab."""
-        if active := self._tabs.active:
-            self.query_one(
-                f"NavigationPane#{active}", NavigationPane
-            ).set_focus_within()
+        """Focus the navigation pane's content."""
+        self._local_files.set_focus_within()

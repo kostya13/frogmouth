@@ -1,11 +1,9 @@
 """Provides the panes that go into the main navigation area."""
 
-from .history import History
 from .local_files import LocalFiles
 from .table_of_contents import TableOfContents
 
 __all__ = [
-    "History",
     "LocalFiles",
     "TableOfContents",
 ]

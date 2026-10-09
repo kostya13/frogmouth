@@ -18,11 +18,11 @@ from textual.screen import Screen
 from textual.widgets import Footer, Markdown
 
 from ..data import load_config, load_history, save_config, save_history
-from ..dialogs import ErrorDialog, HelpDialog
+from ..dialogs import ErrorDialog, HelpDialog, HistoryDialog
 from ..utility import is_likely_url, maybe_markdown
 from ..utility.advertising import APPLICATION_TITLE, PACKAGE_NAME
 from ..widgets import Navigation, Pathbar, Viewer
-from ..widgets.navigation_panes import History, LocalFiles, TableOfContents
+from ..widgets.navigation_panes import LocalFiles, TableOfContents
 from ..widgets.navigation_panes.local_files import FilteredDirectoryTree
 
 
@@ -222,17 +222,25 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         """
         self.visit(event.location)
 
-    def on_history_goto(self, event: History.Goto) -> None:
-        """Handle a request to go to a location from history.
-
-        Args:
-            event: The event to handle.
-        """
-        self.visit(
-            event.location, remember=event.location != self.query_one(Viewer).location
+    def show_history(self) -> None:
+        """Show the history dialog."""
+        self.app.push_screen(
+            HistoryDialog(self.query_one(Viewer).history.locations),
+            callback=self._visit_from_history,
         )
 
-    def on_history_delete(self, event: History.Delete) -> None:
+    def _visit_from_history(self, location: Path | URL | None) -> None:
+        """Visit a location chosen from the history dialog.
+
+        Args:
+            location: The location to visit, `None` if the dialog was
+                cancelled.
+        """
+        if location is None:
+            return
+        self.visit(location, remember=location != self.query_one(Viewer).location)
+
+    def on_history_dialog_delete(self, event: HistoryDialog.Delete) -> None:
         """Handle a request to delete an item from history.
 
         Args:
@@ -240,7 +248,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         """
         self.query_one(Viewer).delete_history(event.history_id)
 
-    def on_history_clear(self) -> None:
+    def on_history_dialog_clear(self) -> None:
         """handle a request to clear down all of history."""
         self.query_one(Viewer).clear_history()
 
@@ -270,7 +278,6 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Args:
             event: The history update event.
         """
-        self.query_one(Navigation).history.update_from(event.viewer.history.locations)
         save_history(event.viewer.history.locations)
 
     def on_markdown_table_of_contents_updated(
@@ -396,8 +403,8 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         self.query_one(Navigation).jump_to_local_files()
 
     def action_history(self) -> None:
-        """Display and focus the history pane."""
-        self.query_one(Navigation).jump_to_history()
+        """Show the history dialog."""
+        self.show_history()
 
     def action_backward(self) -> None:
         """Go backward in the history."""

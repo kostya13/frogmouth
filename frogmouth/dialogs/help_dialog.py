@@ -30,12 +30,12 @@ Welcome to {APPLICATION_TITLE} Help!
 | `Ctrl+n` | Show/hide the navigation |
 | `Ctrl+l` | Show the local file browser |
 | `Ctrl+t` | Show the table of contents |
-| `Ctrl+y` | Show the history |
+| `Ctrl+y` | Show the history dialog |
 | `Ctrl+left` | Go backward in history |
 | `Ctrl+right` | Go forward in history |
 | `c` | Show the table of contents |
 | `l` | Show the local file browser |
-| `h` | Show the history |
+| `h` | Show the history dialog |
 | `+` | Expand the whole local file tree |
 | `_` | Collapse the whole local file tree |
 | `e` | Edit the current document in an external editor |

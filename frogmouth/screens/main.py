@@ -383,6 +383,10 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         elif self.query("Navigation:focus-within"):
             self.query_one(Navigation).popped_out = False
 
+    def action_focus_navigation(self) -> None:
+        """Move focus to the navigation sidebar."""
+        self.query_one(Navigation).focus_tab()
+
     def action_table_of_contents(self) -> None:
         """Focus the table of contents pane."""
         self.query_one(TableOfContents).set_focus_within()

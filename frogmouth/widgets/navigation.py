@@ -38,6 +38,10 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         scrollbar-size: 1 1;
     }
 
+    TabPane {
+        padding: 0 !important;
+    }
+
     ContentSwitcher {
         height: 1fr !important;
     }

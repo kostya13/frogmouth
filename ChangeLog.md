@@ -39,6 +39,8 @@
 - The table of contents pane moved out of the navigation sidebar to a
   separate panel docked on the right, 20 characters wide; it updates as
   documents are opened and `c`/`ctrl+t` focus it.
+- The navigation sidebar has no padding, and `tab` in the viewer now
+  moves focus to it.
 
 ### Removed
 

@@ -65,7 +65,8 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         padding: 0 !important;
     }
 
-    #viewer-host TableOfContents:focus {
+    #viewer-host TableOfContents:focus,
+    #viewer-host TableOfContents:focus-within {
         border: heavy $accent !important;
     }
 

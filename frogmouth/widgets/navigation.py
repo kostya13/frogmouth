@@ -35,6 +35,10 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         border: round $panel-lighten-2;
         padding: 0 !important;
     }
+
+    Navigation > LocalFiles:focus-within {
+        border: heavy $accent !important;
+    }
     """
 
     BINDINGS = [

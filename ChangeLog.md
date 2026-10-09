@@ -26,6 +26,9 @@
   highlighted.
 - The first letter of each navigation tab title is bracketed, e.g.
   `[C]ontents`, `[L]ocal`, `[B]ookmarks`, `[H]istory`.
+- Full screen mode on `ctrl+f`: the viewer takes over the whole screen,
+  without the pathbar, navigation, footer or margins; `Escape` (or
+  `ctrl+f` again) returns to the normal view.
 
 ### Removed
 

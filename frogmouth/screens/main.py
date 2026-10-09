@@ -54,9 +54,34 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         border: blank;
     }
 
-    Screen TabbedContent TabPane:focus-within {
-        border: heavy $accent !important;
+    #viewer-host {
+        height: 1fr;
     }
+
+    /* Full screen mode: the viewer takes over the whole screen. */
+    #viewer-host.full-screen {
+        width: 100%;
+        height: 100%;
+        layers: fullscreen;
+        layer: fullscreen;
+    }
+
+    #viewer-host.full-screen Navigation {
+        display: none;
+    }
+
+    .full-screen-hidden {
+        display: none;
+    }
+
+    #viewer-host.full-screen Viewer:focus {
+        border: none !important;
+    }
+
+    #viewer-host.full-screen Viewer Markdown {
+        margin: 0;
+    }
+
     """
 
     BINDINGS = [
@@ -73,7 +98,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Binding("ctrl+e", "edit", "", show=False),
         Binding("ctrl+r", "reload", "", show=False),
         Binding("ctrl+t", "table_of_contents", "", show=False),
-        Binding("ctrl+y", "history", "", show=False),
+        Binding("ctrl+f", "full_screen", "Full screen"),
         Binding("escape", "escape", "", show=False),
         Binding("f1", "help", "Help"),
         Binding("plus", "expand_tree", "Expand all"),
@@ -100,7 +125,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             The result of composing the screen.
         """
         yield Pathbar()
-        with Horizontal():
+        with Horizontal(id="viewer-host"):
             yield Navigation()
             yield Viewer(classes="focusable")
         yield Footer()
@@ -328,15 +353,25 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         """Toggle the availability of the navigation sidebar."""
         self.query_one(Navigation).toggle()
 
+    def action_full_screen(self) -> None:
+        """Toggle full screen viewing of the document."""
+        host = self.query_one("#viewer-host")
+        host.toggle_class("full-screen")
+        full_screen = host.has_class("full-screen")
+        self.query_one(Pathbar).set_class(full_screen, "full-screen-hidden")
+        self.query_one(Footer).set_class(full_screen, "full-screen-hidden")
+
     def action_escape(self) -> None:
         """Process the escape key."""
-        # Escape is designed to work backwards out of the application. If
-        # the navigation is focused it gets hidden, if it's already hidden
-        # (or the viewer is focused) we exit the application. The idea being
-        # that folk who use this often want to build up muscle memory on the
-        # keyboard will know to camp on the escape key until they get to
-        # where they want to be.
-        if self.query("Navigation:focus-within"):
+        # Escape is designed to work backwards out of the application: it
+        # first leaves full screen, then hides the navigation if it's
+        # focused, and only then exits the application. The idea being
+        # that folk who use this often want to build up muscle memory on
+        # the keyboard will know to camp on the escape key until they get
+        # to where they want to be.
+        if self.query_one("#viewer-host").has_class("full-screen"):
+            self.query_one("#viewer-host").remove_class("full-screen")
+        elif self.query("Navigation:focus-within"):
             self.query_one(Navigation).popped_out = False
         else:
             self.app.exit()

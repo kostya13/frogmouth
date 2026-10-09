@@ -63,6 +63,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         width: 20;
         background: $panel;
         border: blank;
+        padding: 0 !important;
     }
 
     #viewer-host TableOfContents:focus {

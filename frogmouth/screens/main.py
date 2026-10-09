@@ -21,7 +21,7 @@ from ..data import load_config, load_history, save_config, save_history
 from ..dialogs import ErrorDialog, HelpDialog, InputDialog
 from ..utility import is_likely_url, maybe_markdown
 from ..utility.advertising import APPLICATION_TITLE, PACKAGE_NAME
-from ..widgets import Navigation, NavSide, Pathbar, Viewer
+from ..widgets import Navigation, Pathbar, Viewer
 from ..widgets.navigation_panes import Bookmarks, History, LocalFiles
 from ..widgets.navigation_panes.local_files import FilteredDirectoryTree
 
@@ -128,7 +128,6 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         with Horizontal(id="viewer-host"):
             yield Navigation()
             yield Viewer(classes="focusable")
-            yield NavSide()
         yield Footer()
 
     def visit(self, location: Path | URL, remember: bool = True) -> None:
@@ -278,9 +277,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         """
         # We don't handle this, the navigation pane does. Bounce the event
         # over there.
-        self.query_one(NavSide).table_of_contents.on_table_of_contents_updated(
-            event
-        )
+        self.query_one(Navigation).table_of_contents.on_table_of_contents_updated(event)
 
     def on_markdown_table_of_contents_selected(
         self, event: Markdown.TableOfContentsSelected
@@ -384,7 +381,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
 
     def action_table_of_contents(self) -> None:
         """Display and focus the table of contents pane."""
-        self.query_one(NavSide).jump_to_contents()
+        self.query_one(Navigation).jump_to_contents()
 
     def action_local_files(self) -> None:
         """Display and focus the local files selection pane."""
@@ -392,7 +389,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
 
     def action_bookmarks(self) -> None:
         """Display and focus the bookmarks selection pane."""
-        self.query_one(NavSide).jump_to_bookmarks()
+        self.query_one(Navigation).jump_to_bookmarks()
 
     def action_history(self) -> None:
         """Display and focus the history pane."""
@@ -425,7 +422,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             location: The location to bookmark.
             bookmark: The bookmark to add.
         """
-        if (bookmarks := self.query_one(NavSide).bookmarks) is not None:
+        if (bookmarks := self.query_one(Navigation).bookmarks) is not None:
             bookmarks.add_bookmark(bookmark, location)
 
     def action_bookmark_this(self) -> None:

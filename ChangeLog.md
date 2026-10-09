@@ -32,6 +32,9 @@
 - The bookmarks pane can now be hidden: `show_bookmarks` in the
   configuration file controls whether the pane appears in the navigation
   (default: hidden).
+- The navigation is split into two sidebars of equal width: local files
+  and history stay on the left, the table of contents and bookmarks moved
+  to a new right-hand sidebar.
 
 ### Removed
 

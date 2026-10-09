@@ -62,16 +62,11 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         """Compose the content of the navigation pane."""
         self.popped_out = False
         # pylint:disable=attribute-defined-outside-init
-        self._contents = TableOfContents()
         self._local_files = LocalFiles()
         self._history = History()
         with TabbedContent() as tabs:
             self._tabs = tabs
             yield self._local_files
-            yield self._contents
-            if load_config().show_bookmarks:
-                self._bookmarks = Bookmarks()
-                yield self._bookmarks
             yield self._history
 
     def on_mount(self) -> None:
@@ -96,19 +91,9 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         self.styles.dock = "left" if self.docked_left else "right"
 
     @property
-    def table_of_contents(self) -> TableOfContents:
-        """The table of contents widget."""
-        return self._contents
-
-    @property
     def local_files(self) -> LocalFiles:
         """The local files widget."""
         return self._local_files
-
-    @property
-    def bookmarks(self) -> Bookmarks | None:
-        """The bookmarks widget, if it is shown; `None` if hidden."""
-        return getattr(self, "_bookmarks", None)
 
     @property
     def history(self) -> History:
@@ -131,18 +116,6 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         self.call_after_refresh(self.focus_tab)
         return self
 
-    def jump_to_bookmarks(self) -> Self:
-        """Switch to and focus the bookmarks pane, if it is shown.
-
-        Returns:
-            Self.
-        """
-        if getattr(self, "_bookmarks", None) is None:
-            return self
-        self.popped_out = True
-        self._bookmarks.activate()
-        self.call_after_refresh(self.focus_tab)
-        return self
 
     def jump_to_history(self) -> Self:
         """Switch to and focus the history pane.
@@ -155,16 +128,6 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         self.call_after_refresh(self.focus_tab)
         return self
 
-    def jump_to_contents(self) -> Self:
-        """Switch to and focus the table of contents pane.
-
-        Returns:
-            Self.
-        """
-        self.popped_out = True
-        self._contents.activate()
-        self.call_after_refresh(self.focus_tab)
-        return self
 
     def action_previous_tab(self) -> None:
         """Switch to the previous tab in the navigation pane."""
@@ -182,6 +145,72 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         config.navigation_left = not config.navigation_left
         save_config(config)
         self.docked_left = config.navigation_left
+
+    def focus_tab(self) -> None:
+        """Focus the currently active tab."""
+        if active := self._tabs.active:
+            self.query_one(
+                f"NavigationPane#{active}", NavigationPane
+            ).set_focus_within()
+
+
+class NavSide(Vertical, can_focus=False, can_focus_children=True):
+    """The right-hand navigation panel (contents and bookmarks)."""
+
+    DEFAULT_CSS = """
+    NavSide {
+        width: 44;
+        background: $panel;
+        display: block;
+        dock: right;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        """Compose the right-hand navigation panes.
+
+        Returns:
+            The result of composing the panel.
+        """
+        self._contents = TableOfContents()
+        with TabbedContent() as tabs:
+            self._tabs = tabs
+            yield self._contents
+            if load_config().show_bookmarks:
+                self._bookmarks = Bookmarks()
+                yield self._bookmarks
+
+    @property
+    def table_of_contents(self) -> TableOfContents:
+        """The table of contents widget."""
+        return self._contents
+
+    @property
+    def bookmarks(self) -> Bookmarks | None:
+        """The bookmarks widget, if it is shown; `None` if hidden."""
+        return getattr(self, "_bookmarks", None)
+
+    def jump_to_contents(self) -> Self:
+        """Switch to and focus the table of contents pane.
+
+        Returns:
+            Self.
+        """
+        self._contents.activate()
+        self.call_after_refresh(self.focus_tab)
+        return self
+
+    def jump_to_bookmarks(self) -> Self:
+        """Switch to and focus the bookmarks pane, if it is shown.
+
+        Returns:
+            Self.
+        """
+        if getattr(self, "_bookmarks", None) is None:
+            return self
+        self._bookmarks.activate()
+        self.call_after_refresh(self.focus_tab)
+        return self
 
     def focus_tab(self) -> None:
         """Focus the currently active tab."""

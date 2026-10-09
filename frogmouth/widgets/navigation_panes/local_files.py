@@ -226,7 +226,7 @@ class LocalFiles(NavigationPane):
 
     def __init__(self) -> None:
         """Initialise the local files navigation pane."""
-        super().__init__("Local")
+        super().__init__("[L]ocal")
 
     def compose(self) -> ComposeResult:
         """Compose the child widgets."""

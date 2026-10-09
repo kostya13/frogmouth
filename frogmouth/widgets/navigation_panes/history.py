@@ -83,7 +83,7 @@ class History(NavigationPane):
 
     def __init__(self) -> None:
         """Initialise the history navigation pane."""
-        super().__init__("History")
+        super().__init__("[H]istory")
 
     def compose(self) -> ComposeResult:
         """Compose the child widgets."""

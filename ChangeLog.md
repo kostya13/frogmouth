@@ -24,6 +24,8 @@
 - The document that is open in the viewer is now revealed within the local
   file tree: the branches leading to it are expanded and its entry is
   highlighted.
+- The first letter of each navigation tab title is bracketed, e.g.
+  `[C]ontents`, `[L]ocal`, `[B]ookmarks`, `[H]istory`.
 
 ### Removed
 

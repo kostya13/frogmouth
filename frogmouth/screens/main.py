@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from os import getenv
+from shlex import split as shlex_split
+from subprocess import run as run_process
 from functools import partial
 from pathlib import Path
 from typing import Awaitable, Callable
-from webbrowser import open as open_url
 
 from httpx import URL
 from textual.app import ComposeResult
@@ -15,27 +17,13 @@ from textual.events import Paste
 from textual.screen import Screen
 from textual.widgets import Footer, Markdown
 
-from .. import __version__
 from ..data import load_config, load_history, save_config, save_history
-from ..dialogs import ErrorDialog, HelpDialog, InformationDialog, InputDialog
-from ..utility import (
-    build_raw_bitbucket_url,
-    build_raw_codeberg_url,
-    build_raw_github_url,
-    build_raw_gitlab_url,
-    is_likely_url,
-    maybe_markdown,
-)
-from ..utility.advertising import (
-    APPLICATION_TITLE,
-    ORGANISATION_NAME,
-    ORGANISATION_TITLE,
-    ORGANISATION_URL,
-    PACKAGE_NAME,
-    TEXTUAL_URL,
-)
-from ..widgets import Navigation, Omnibox, Viewer
+from ..dialogs import ErrorDialog, HelpDialog, InputDialog
+from ..utility import is_likely_url, maybe_markdown
+from ..utility.advertising import APPLICATION_TITLE, PACKAGE_NAME
+from ..widgets import Navigation, Pathbar, Viewer
 from ..widgets.navigation_panes import Bookmarks, History, LocalFiles
+from ..widgets.navigation_panes.local_files import FilteredDirectoryTree
 
 
 class Main(Screen[None]):  # pylint:disable=too-many-public-methods
@@ -62,7 +50,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     }
 
     Screen TabbedContent TabPane {
-        padding: 0 1;
+        padding: 0;
         border: blank;
     }
 
@@ -72,18 +60,24 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     """
 
     BINDINGS = [
-        Binding("/,:", "omnibox", "Omnibox", show=False),
+        Binding("c", "table_of_contents", "Contents", show=False),
+        Binding("l", "local_files", "Local", show=False),
+        Binding("b", "bookmarks", "Bookmarks", show=False),
+        Binding("h", "history", "History", show=False),
+        Binding("e", "edit", "Edit", show=False),
         Binding("ctrl+b", "bookmarks", "", show=False),
         Binding("ctrl+d", "bookmark_this", "", show=False),
         Binding("ctrl+l", "local_files", "", show=False),
         Binding("ctrl+left", "backward", "", show=False),
         Binding("ctrl+right", "forward", "", show=False),
+        Binding("ctrl+e", "edit", "", show=False),
         Binding("ctrl+r", "reload", "", show=False),
         Binding("ctrl+t", "table_of_contents", "", show=False),
         Binding("ctrl+y", "history", "", show=False),
         Binding("escape", "escape", "", show=False),
         Binding("f1", "help", "Help"),
-        Binding("f2", "about", "About"),
+        Binding("plus", "expand_tree", "Expand all"),
+        Binding("underscore", "collapse_tree", "Collapse all"),
         Binding("ctrl+n", "navigation", "Navigation"),
         Binding("ctrl+q", "app.quit", "Quit"),
         Binding("f10", "toggle_theme", "", show=False),
@@ -105,7 +99,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Returns:
             The result of composing the screen.
         """
-        yield Omnibox(classes="focusable")
+        yield Pathbar()
         with Horizontal():
             yield Navigation()
             yield Viewer(classes="focusable")
@@ -158,144 +152,28 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         if history := load_history():
             self.query_one(Viewer).load_history(history)
 
-        # If we've not been tasked to start up looking at a very specific
-        # location (in other words if no location was passed on the command
-        # line), and if there is some history...
-        if self._initial_location is None and history:
-            # ...start up revisiting the last location the user was looking
-            # at.
-            self.query_one(Viewer).visit(history[-1], remember=False)
-            self.query_one(Omnibox).value = str(history[-1])
-        elif self._initial_location is not None:
-            # Seems there is an initial location; so let's start up looking
-            # at that.
-            (omnibox := self.query_one(Omnibox)).value = self._initial_location
-            await omnibox.action_submit()
+        # If we've been tasked to start up looking at a very specific
+        # location, start up looking at that.
+        if self._initial_location is not None:
+            location: Path | URL = (
+                Path(self._initial_location).expanduser()
+                if not is_likely_url(self._initial_location)
+                else URL(self._initial_location)
+            )
+            self.visit(location)
+        else:
+            # Fall back to the last visited local document; if it no longer
+            # exists, the built-in welcome placeholder stays on screen.
+            last = next(
+                (item for item in reversed(history) if isinstance(item, Path)),
+                None,
+            )
+            if last is not None and last.exists():
+                self.visit(last, remember=False)
 
     def on_navigation_hidden(self) -> None:
         """React to the navigation sidebar being hidden."""
         self.query_one(Viewer).focus()
-
-    def on_omnibox_local_view_command(self, event: Omnibox.LocalViewCommand) -> None:
-        """Handle the omnibox asking us to view a particular file.
-
-        Args:
-            event: The local view command event.
-        """
-        self.visit(event.path)
-
-    def on_omnibox_remote_view_command(self, event: Omnibox.RemoteViewCommand) -> None:
-        """Handle the omnibox asking us to view a particular URL.
-
-        Args:
-            event: The remote view command event.
-        """
-        self.visit(event.url)
-
-    def on_omnibox_contents_command(self) -> None:
-        """Handle being asked to show the table of contents."""
-        self.action_table_of_contents()
-
-    def on_omnibox_local_files_command(self) -> None:
-        """Handle being asked to view the local files picker."""
-        self.action_local_files()
-
-    def on_omnibox_bookmarks_command(self) -> None:
-        """Handle being asked to view the bookmarks."""
-        self.action_bookmarks()
-
-    def on_omnibox_local_chdir_command(self, event: Omnibox.LocalChdirCommand) -> None:
-        """Handle being asked to view a new directory in the local files picker.
-
-        Args:
-            event: The chdir command event to handle.
-        """
-        if not event.target.exists():
-            self.app.push_screen(
-                ErrorDialog("No such directory", f"{event.target} does not exist.")
-            )
-        elif not event.target.is_dir():
-            self.app.push_screen(
-                ErrorDialog("Not a directory", f"{event.target} is not a directory.")
-            )
-        else:
-            self.query_one(Navigation).jump_to_local_files(event.target)
-
-    def on_omnibox_history_command(self) -> None:
-        """Handle being asked to view the history."""
-        self.action_history()
-
-    async def _from_forge(
-        self,
-        forge: str,
-        event: Omnibox.ForgeCommand,
-        builder: Callable[[str, str, str | None, str | None], Awaitable[URL | None]],
-    ) -> None:
-        """Build a URL for getting a file from a given forge.
-
-        Args:
-            forge: The display name of the forge.
-            event: The event that contains the request information for the file.
-            builder: The function that builds the URL.
-        """
-        if url := await builder(
-            event.owner, event.repository, event.branch, event.desired_file
-        ):
-            self.visit(url)
-        else:
-            self.app.push_screen(
-                ErrorDialog(
-                    f"Unable to work out a {forge} URL",
-                    f"After trying a few options it hasn't been possible to work out the {forge} URL.\n\n"
-                    "Perhaps the file you're after is on an unusual branch, or the spelling is wrong?",
-                )
-            )
-
-    async def on_omnibox_git_hub_command(self, event: Omnibox.GitHubCommand) -> None:
-        """Handle a GitHub file shortcut command.
-
-        Args:
-            event: The GitHub shortcut command event to handle.
-        """
-        await self._from_forge("GitHub", event, build_raw_github_url)
-
-    async def on_omnibox_git_lab_command(self, event: Omnibox.GitLabCommand) -> None:
-        """Handle a GitLab file shortcut command.
-
-        Args:
-            event: The GitLab shortcut command event to handle.
-        """
-        await self._from_forge("GitLab", event, build_raw_gitlab_url)
-
-    async def on_omnibox_bit_bucket_command(
-        self, event: Omnibox.BitBucketCommand
-    ) -> None:
-        """Handle a BitBucket shortcut command.
-
-        Args:
-            event: The BitBucket shortcut command event to handle.
-        """
-        await self._from_forge("BitBucket", event, build_raw_bitbucket_url)
-
-    async def on_omnibox_codeberg_command(self, event: Omnibox.CodebergCommand) -> None:
-        """Handle a Codeberg shortcut command.
-
-        Args:
-            event: The Codeberg shortcut command event to handle.
-        """
-        await self._from_forge("Codeberg", event, build_raw_codeberg_url)
-
-    def on_omnibox_about_command(self) -> None:
-        """Handle being asked to show the about dialog."""
-        self.action_about()
-
-    def on_omnibox_help_command(self) -> None:
-        """Handle being asked to show the help document."""
-        self.action_help()
-
-    def on_omnibox_quit_command(self) -> None:
-        """Handle being asked to quit."""
-        self.app.exit()
 
     def on_local_files_goto(self, event: LocalFiles.Goto) -> None:
         """Visit a local file in the viewer.
@@ -341,10 +219,16 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Args:
             event: The location change event.
         """
-        # Update the omnibox with whatever is appropriate for the new location.
-        self.query_one(Omnibox).visiting = (
-            str(event.viewer.location) if event.viewer.location is not None else ""
+        # Update the pathbar with whatever is appropriate for the new
+        # location.
+        self.query_one(Pathbar).location = Pathbar.display_text(
+            event.viewer.location
         )
+        # If the newly-arrived-at location is a local file, reveal it within
+        # the local files tree.
+        if isinstance(event.viewer.location, Path):
+            tree = self.query_one(Navigation).query_one(FilteredDirectoryTree)
+            tree.call_after_refresh(tree.reveal, event.viewer.location)
         # Having safely arrived at a new location, that implies that we want
         # to focus on the viewer.
         self.query_one(Viewer).focus()
@@ -447,24 +331,15 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
     def action_escape(self) -> None:
         """Process the escape key."""
         # Escape is designed to work backwards out of the application. If
-        # the viewer is focused, the omnibox gets focused, if omnibox has
-        # focus but it isn't empty, it gets emptied, if it's empty we exit
-        # the application. The idea being that folk who use this often want
-        # to build up muscle memory on the keyboard will know to camp on the
-        # escape key until they get to where they want to be.
-        if (omnibox := self.query_one(Omnibox)).has_focus:
-            if omnibox.value:
-                omnibox.value = ""
-            else:
-                self.app.exit()
+        # the navigation is focused it gets hidden, if it's already hidden
+        # (or the viewer is focused) we exit the application. The idea being
+        # that folk who use this often want to build up muscle memory on the
+        # keyboard will know to camp on the escape key until they get to
+        # where they want to be.
+        if self.query("Navigation:focus-within"):
+            self.query_one(Navigation).popped_out = False
         else:
-            if self.query("Navigation:focus-within"):
-                self.query_one(Navigation).popped_out = False
-            omnibox.focus()
-
-    def action_omnibox(self) -> None:
-        """Jump to the omnibox."""
-        self.query_one(Omnibox).focus()
+            self.app.exit()
 
     def action_table_of_contents(self) -> None:
         """Display and focus the table of contents pane."""
@@ -494,17 +369,13 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         """Show the help."""
         self.app.push_screen(HelpDialog())
 
-    def action_about(self) -> None:
-        """Show the about dialog."""
-        self.app.push_screen(
-            InformationDialog(
-                f"{APPLICATION_TITLE} [b dim]v{__version__}",
-                f"Built with [@click=app.visit('{TEXTUAL_URL}')]Textual[/] "
-                f"by [@click=app.visit('{ORGANISATION_URL}')]{ORGANISATION_TITLE}[/].\n\n"
-                f"[@click=app.visit('https://github.com/{ORGANISATION_NAME}/{PACKAGE_NAME}')]"
-                f"https://github.com/{ORGANISATION_NAME}/{PACKAGE_NAME}[/]",
-            )
-        )
+    def action_expand_tree(self) -> None:
+        """Expand every directory in the local file tree."""
+        self.query_one(Navigation).query_one(FilteredDirectoryTree).expand_all()
+
+    def action_collapse_tree(self) -> None:
+        """Collapse every directory in the local file tree."""
+        self.query_one(Navigation).query_one(FilteredDirectoryTree).collapse_all()
 
     def add_bookmark(self, location: Path | URL, bookmark: str) -> None:
         """Handle adding the bookmark.
@@ -551,4 +422,29 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
 
     def action_reload(self) -> None:
         """Reload the current document."""
+        self.query_one(Viewer).reload()
+
+    def action_edit(self) -> None:
+        """Open the current document in an external editor."""
+        location = self.query_one(Viewer).location
+
+        # Only local files can be edited; anything else (or nothing at all)
+        # is an error.
+        if not isinstance(location, Path):
+            self.app.push_screen(
+                ErrorDialog(
+                    "Not an editable location",
+                    "The current view isn't a local file, so it can't be edited.",
+                )
+            )
+            return
+
+        # Work out the editor command: the configuration takes priority, and
+        # after that we fall back to $EDITOR, and then to vim.
+        editor = load_config().editor or getenv("EDITOR") or "vim"
+
+        # Hand the terminal over to the editor, then reload the document in
+        # case the user changed it.
+        with self.app.suspend():
+            run_process([*shlex_split(editor), str(location)])
         self.query_one(Viewer).reload()

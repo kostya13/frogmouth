@@ -1,7 +1,7 @@
 """The major widgets for the application."""
 
 from .navigation import Navigation
-from .omnibox import Omnibox
+from .pathbar import Pathbar
 from .viewer import Viewer
 
-__all__ = ["Navigation", "Omnibox", "Viewer"]
+__all__ = ["Navigation", "Pathbar", "Viewer"]

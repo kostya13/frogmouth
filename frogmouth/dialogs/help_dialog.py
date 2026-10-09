@@ -26,8 +26,7 @@ Welcome to {APPLICATION_TITLE} Help!
 
 | Key | Command |
 | -- | -- |
-| `/` | Focus the address bar (`ctrl+u` to clear address bar) |
-| `Escape` | Return to address bar / clear address bar / quit |
+| `Escape` | Hide the navigation / quit |
 | `Ctrl+n` | Show/hide the navigation |
 | `Ctrl+b` | Show the bookmarks |
 | `Ctrl+l` | Show the local file browser |
@@ -35,6 +34,13 @@ Welcome to {APPLICATION_TITLE} Help!
 | `Ctrl+y` | Show the history |
 | `Ctrl+left` | Go backward in history |
 | `Ctrl+right` | Go forward in history |
+| `c` | Show the table of contents |
+| `l` | Show the local file browser |
+| `b` | Show the bookmarks |
+| `h` | Show the history |
+| `+` | Expand the whole local file tree |
+| `_` | Collapse the whole local file tree |
+| `e` | Edit the current document in an external editor |
 
 ## General keys
 
@@ -42,51 +48,10 @@ Welcome to {APPLICATION_TITLE} Help!
 | -- | -- |
 | `Ctrl+d` | Add the current document to the bookmarks |
 | `Ctrl+r` | Reload the current document |
+| `Ctrl+e` | Edit the current document in an external editor |
 | `Ctrl+q` | Quit the application |
 | `F1` | This help |
-| `F2` | Details about {APPLICATION_TITLE} |
 | `F10` | Toggle dark/light theme |
-
-## Commands
-
-Press `/` or click the address bar, then enter any of the following commands:
-
-| Command | Aliases | Arguments | Command |
-| -- | -- | -- | -- |
-| `about` | `a` | | Show details about the application |
-| `bookmarks` | `b`, `bm` | | Show the bookmarks list |
-| `bitbucket` | `bb` | `<repo-info>` | View a file on BitBucket (see below) |
-| `codeberg` | `cb` | `<repo-info>` | View a file on Codeberg (see below) |
-| `changelog` | `cl` | | View the Frogmouth ChangeLog |
-| `chdir` | `cd` | `<dir>` | Switch the local file browser to a new directory |
-| `contents` | `c`, `toc` | | Show the table of contents for the document |
-| `discord` | | | Visit the Textualize Discord server |
-| `github` | `gh` | `<repo-info>` | View a file on GitHub (see below) |
-| `gitlab` | `gl` | `<repo-info>` | View a file on GitLab (see below) |
-| `help` | `?` | | Show this document |
-| `history` | `h` | | Show the history |
-| `local` | `l` | | Show the local file browser |
-| `quit` | `q` | | Quit the viewer |
-
-## Git forge quick view
-
-The git forge quick view command can be used to quickly view a file on a git
-forge such as GitHub or GitLab. Various forms of specifying the repository,
-branch and file are supported. For example:
-
-- `<owner>`/`<repo>`
-- `<owner>`/`<repo>` `<file>`
-- `<owner>` `<repo>`
-- `<owner>` `<repo>` `<file>`
-- `<owner>`/`<repo>`:`<branch>`
-- `<owner>`/`<repo>`:`<branch>` `<file>`
-- `<owner>` `<repo>`:`<branch>`
-- `<owner>` `<repo>`:`<branch>` `<file>`
-
-Anywhere where `<file>` is omitted it is assumed `README.md` is desired.
-
-Anywhere where `<branch>` is omitted a test is made for the desired file on
-first a `main` and then a `master` branch.
 """
 """The main help text for the application."""
 

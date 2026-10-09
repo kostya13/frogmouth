@@ -1,6 +1,6 @@
 # Frogmouth ChangeLog
 
-## Unreleased
+## 1.0.0 - Unreleased
 
 ### Added
 
@@ -8,6 +8,46 @@
   [#15](https://github.com/Textualize/frogmouth/issues/15)
 - Added support for jumping to an internal anchor.
   [#91](https://github.com/Textualize/frogmouth/issues/91)
+- Added the ability to edit the current local document in an external
+  editor (`ctrl+e` or `e`). The editor is taken from the `editor`
+  configuration option, falling back to `$EDITOR` and then `vim`.
+- The local file browser now hides the root directory itself; its contents
+  are shown as the top level of the tree.
+- At startup, without an explicit command line file, the last visited local
+  document is reopened; if it no longer exists, the built-in welcome
+  placeholder stays on screen.
+- Each location now appears at most once in the visit history: revisiting
+  a document moves it to the end of the history instead of duplicating it.
+  Duplicates already present in a saved history file are removed on load.
+- Tree hotkeys: `+` expands the whole local file tree and `_` collapses it
+  (the keys work with both the main and the numeric keypad rows).
+- The document that is open in the viewer is now revealed within the local
+  file tree: the branches leading to it are expanded and its entry is
+  highlighted.
+
+### Removed
+
+- Removed the address bar (omnibox). The current location is now shown in
+  a static pathbar at the top of the screen.
+- Removed the "About" dialog (`f2`); version information now lives only in
+  the help dialog and the package metadata.
+- Removed the now-unused `InformationDialog`.
+
+### Fixed
+
+- Fixed a crash when switching navigation tabs while focus is inside the
+  navigation sidebar (`focus_tab` looked up panes by the tab ID, which
+  carries a `--content-tab-` prefix in Textual 0.53).
+- The `l` and `h` keys no longer switch navigation tabs when focus is
+  inside the navigation; they now always reach the main screen
+  `local_files`/`history` shortcuts.
+- The `c`, `l`, `b` and `h` shortcuts no longer hide the navigation
+  sidebar; they only switch to (and open, if hidden) the related pane.
+  Use `Escape` or `ctrl+n` to hide the navigation.
+- The scrollbars of the navigation panes (local files, bookmarks, history,
+  table of contents) are now one character wide.
+- The content of the viewer now sits one character from each edge of the
+  viewing pane instead of the previous wide margins.
 
 ## [0.9.2] - 2023-11-28
 

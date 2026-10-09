@@ -24,6 +24,7 @@ class TableOfContents(NavigationPane):
         width: 1fr;
         background: $panel;
         padding: 0;
+        scrollbar-size: 1 1;
     }
 
     TableOfContents > MarkdownTableOfContents > Tree:focus .tree--cursor, TableOfContents > MarkdownTableOfContents > Tree .tree--cursor {

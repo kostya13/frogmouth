@@ -37,6 +37,7 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
 
     TabbedContent {
         height: 100% !important;
+        scrollbar-size: 1 1;
     }
 
     ContentSwitcher {
@@ -45,8 +46,8 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
     """
 
     BINDINGS = [
-        Binding("comma,a,ctrl+left,shift+left,h", "previous_tab", "", show=False),
-        Binding("full_stop,d,ctrl+right,shift+right,l", "next_tab", "", show=False),
+        Binding("comma,a,ctrl+left,shift+left", "previous_tab", "", show=False),
+        Binding("full_stop,d,ctrl+right,shift+right", "next_tab", "", show=False),
         Binding("\\", "toggle_dock", "Dock left/right"),
     ]
     """Bindings local to the navigation pane."""
@@ -116,20 +117,17 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
     def jump_to_local_files(self, target: Path | None = None) -> Self:
         """Switch to and focus the local files pane.
 
+        Args:
+            target: Optional directory to switch the local file browser to.
+
         Returns:
             Self.
         """
-        if (
-            self.popped_out
-            and target is None
-            and self.query_one(Tabs).active == self._local_files.id
-        ):
-            self.popped_out = False
-        else:
-            self.popped_out = True
-            if target is not None:
-                self._local_files.chdir(target)
-            self._local_files.activate().set_focus_within()
+        self.popped_out = True
+        if target is not None:
+            self._local_files.chdir(target)
+        self._local_files.activate()
+        self.call_after_refresh(self.focus_tab)
         return self
 
     def jump_to_bookmarks(self) -> Self:
@@ -138,11 +136,9 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         Returns:
             Self.
         """
-        if self.popped_out and self.query_one(Tabs).active == self._bookmarks.id:
-            self.popped_out = False
-        else:
-            self.popped_out = True
-            self._bookmarks.activate().set_focus_within()
+        self.popped_out = True
+        self._bookmarks.activate()
+        self.call_after_refresh(self.focus_tab)
         return self
 
     def jump_to_history(self) -> Self:
@@ -151,11 +147,9 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         Returns:
             Self.
         """
-        if self.popped_out and self.query_one(Tabs).active == self._history.id:
-            self.popped_out = False
-        else:
-            self.popped_out = True
-            self._history.activate().set_focus_within()
+        self.popped_out = True
+        self._history.activate()
+        self.call_after_refresh(self.focus_tab)
         return self
 
     def jump_to_contents(self) -> Self:
@@ -164,22 +158,20 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
         Returns:
             Self.
         """
-        if self.popped_out and self.query_one(Tabs).active == self._contents.id:
-            self.popped_out = False
-        else:
-            self.popped_out = True
-            self._contents.activate().set_focus_within()
+        self.popped_out = True
+        self._contents.activate()
+        self.call_after_refresh(self.focus_tab)
         return self
 
     def action_previous_tab(self) -> None:
         """Switch to the previous tab in the navigation pane."""
         self.query_one(Tabs).action_previous_tab()
-        self.focus_tab()
+        self.call_after_refresh(self.focus_tab)
 
     def action_next_tab(self) -> None:
         """Switch to the next tab in the navigation pane."""
         self.query_one(Tabs).action_next_tab()
-        self.focus_tab()
+        self.call_after_refresh(self.focus_tab)
 
     def action_toggle_dock(self) -> None:
         """Toggle the dock side for the navigation."""
@@ -190,7 +182,7 @@ class Navigation(Vertical, can_focus=False, can_focus_children=True):
 
     def focus_tab(self) -> None:
         """Focus the currently active tab."""
-        if active := self.query_one(Tabs).active:
+        if active := self._tabs.active:
             self.query_one(
                 f"NavigationPane#{active}", NavigationPane
             ).set_focus_within()

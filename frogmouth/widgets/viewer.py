@@ -37,9 +37,21 @@ class History:
     """The maximum number of items we'll keep in history."""
 
     def __init__(self, history: list[Path | URL] | None = None) -> None:
-        """Initialise the history object."""
+        """Initialise the history object.
+
+        Args:
+            history: The history to load; duplicates are removed, keeping
+                the position of the last occurrence of each location.
+        """
+        seen: set[Path | URL] = set()
+        unique: list[Path | URL] = []
+        for location in reversed(history or []):
+            if location not in seen:
+                seen.add(location)
+                unique.append(location)
+        unique.reverse()
         self._history: deque[Path | URL] = deque(
-            history or [], maxlen=self.MAXIMUM_HISTORY_LENGTH
+            unique, maxlen=self.MAXIMUM_HISTORY_LENGTH
         )
         """The list that holds the history of locations visited."""
         self._current: int = max(len(self._history) - 1, 0)
@@ -66,9 +78,16 @@ class History:
     def remember(self, location: Path | URL) -> None:
         """Remember a new location in the history.
 
+        A location that is already in the history is moved to the end
+        rather than being added again; each location appears at most once.
+
         Args:
             location: The location to remember.
         """
+        try:
+            self._history.remove(location)
+        except ValueError:
+            pass
         self._history.append(location)
         self._current = len(self._history) - 1
 
@@ -106,6 +125,11 @@ class Viewer(VerticalScroll, can_focus=True, can_focus_children=True):
     Viewer {
         width: 1fr;
         scrollbar-gutter: stable;
+        scrollbar-size: 1 1;
+    }
+
+    Viewer Markdown {
+        margin: 0 0 1 1;
     }
     """
 

@@ -55,6 +55,7 @@ class Bookmarks(NavigationPane):
         background: $panel;
         border: none;
         height: 1fr;
+        scrollbar-size: 1 1;
     }
 
     Bookmarks > OptionList:focus {

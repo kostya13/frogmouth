@@ -9,7 +9,7 @@ from pathlib import Path
 
 from xdg import xdg_config_home
 
-from ..utility.advertising import ORGANISATION_NAME, PACKAGE_NAME
+from ..utility.advertising import PACKAGE_NAME
 
 
 @dataclass
@@ -25,6 +25,12 @@ class Config:
     navigation_left: bool = True
     """Should navigation be docked to the left side of the screen?"""
 
+    editor: str = ""
+    """The external editor to use; empty means fall back to $EDITOR/vim."""
+
+    wikipath: str = ""
+    """Directory to open on startup; empty means fall back to ~/wiki."""
+
 
 def config_file() -> Path:
     """Get the path to the configuration file.
@@ -36,7 +42,7 @@ def config_file() -> Path:
         As a side-effect, the configuration directory will be created if it
         does not exist.
     """
-    (config_dir := xdg_config_home() / ORGANISATION_NAME / PACKAGE_NAME).mkdir(
+    (config_dir := xdg_config_home() / PACKAGE_NAME).mkdir(
         parents=True, exist_ok=True
     )
     return config_dir / "configuration.json"

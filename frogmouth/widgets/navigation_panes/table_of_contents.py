@@ -57,6 +57,12 @@ class TableOfContents(NavigationPane):
         # https://github.com/Textualize/textual/issues/2516
         yield MarkdownTableOfContents(Markdown())
 
+    def on_mount(self) -> None:
+        """Configure the table of contents tree once the DOM is set up."""
+        self.query_one(
+            "MarkdownTableOfContents > Tree", Tree
+        ).guide_depth = 2
+
     def on_table_of_contents_updated(
         self, event: Markdown.TableOfContentsUpdated
     ) -> None:

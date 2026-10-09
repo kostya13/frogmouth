@@ -32,6 +32,8 @@
 - The bookmarks pane can now be hidden: `show_bookmarks` in the
   configuration file controls whether the pane appears in the navigation
   (default: hidden).
+- The indentation of the table of contents tree is now two characters
+  per level instead of four.
 
 ### Removed
 

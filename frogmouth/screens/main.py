@@ -517,17 +517,24 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             self.query_one(Viewer).reload()
 
     def action_new_file(self) -> None:
-        """Create a new Markdown file or directory."""
-        current = self.query_one(Viewer).location
-        if not isinstance(current, Path):
+        """Create a new Markdown file or directory.
+
+        The new item is created in the directory of the file (or the
+        directory itself) under the cursor in the local files tree; the
+        document being viewed doesn't matter.
+        """
+        node = self.query_one(Navigation).query_one(FilteredDirectoryTree).cursor_node
+        path = getattr(node.data, "path", None) if node is not None else None
+        if path is None:
             self.app.push_screen(
                 ErrorDialog(
                     "No target directory",
-                    "There's no local file open, so there's no directory to "
-                    "create the new file in.",
+                    "There's no location under the cursor in the file tree, "
+                    "so there's no directory to create the new file in.",
                 )
             )
             return
+        parent = path if path.is_dir() else path.parent
 
         def _create(request: tuple[str, str, bool] | None) -> None:
             """Create the file or directory from the dialog's response.
@@ -542,33 +549,33 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             kind, name, open_for_editing = request
             tree = self.query_one(Navigation).query_one(FilteredDirectoryTree)
             if kind == "directory":
-                target = current.parent / name
+                target = parent / name
                 if target.exists():
                     self.app.push_screen(
                         ErrorDialog(
                             "Directory exists",
                             f"'{target.name}' already exists in "
-                            f"'{current.parent}'.",
+                            f"'{parent}'.",
                         )
                     )
                     return
                 target.mkdir()
-                self._refresh_tree_node(tree, current.parent)
+                self._refresh_tree_node(tree, parent)
                 return
-            target = current.parent / f"{name}.md"
+            target = parent / f"{name}.md"
             if target.exists():
                 self.app.push_screen(
                     ErrorDialog(
                         "File exists",
                         f"'{target.name}' already exists in "
-                        f"'{current.parent}'.",
+                        f"'{parent}'.",
                     )
                 )
                 return
             target.touch()
             # Refresh the tree node for the parent directory so the new
             # file shows up in the tree.
-            self._refresh_tree_node(tree, current.parent)
+            self._refresh_tree_node(tree, parent)
             if open_for_editing:
                 # Edit first, then visit; visiting first would have the
                 # editor suspend race with the document loading.

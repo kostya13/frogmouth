@@ -43,8 +43,9 @@
 - New file or directory creation on `n`/`ctrl+n`: the dialog has
   "File" and "Directory" tabs; for a file enter a name (the `.md`
   extension is added automatically) and optionally open it in the
-  editor, for a directory just enter a name. New items are created next
-  to the currently open document and the tree refreshes. Showing/hiding
+  editor, for a directory just enter a name. New items are created in
+  the directory of the file (or inside the directory) under the cursor
+  in the file tree, and the tree refreshes. Showing/hiding
   the navigation moved to `ctrl+o`.
 - File deletion on `d`/`ctrl+d`: delete the file under the cursor in
   the local files tree, with a confirmation dialog; the tree refreshes

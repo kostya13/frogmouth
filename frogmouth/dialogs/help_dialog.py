@@ -31,7 +31,6 @@ Welcome to {APPLICATION_TITLE} Help!
 | `Ctrl+l` | Show the local file browser |
 | `Ctrl+n` | Create a new Markdown file |
 | `Ctrl+t` | Show the table of contents |
-| `Ctrl+y` | Show the history dialog |
 | `Ctrl+left` | Go backward in history |
 | `Ctrl+right` | Go forward in history |
 | `c` | Show the table of contents |

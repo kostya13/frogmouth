@@ -39,6 +39,7 @@ Welcome to {APPLICATION_TITLE} Help!
 | `h` | Show the history dialog |
 | `+` | Expand the whole local file tree |
 | `_` | Collapse the whole local file tree |
+| `n` | Create a new Markdown file |
 | `e` | Edit the current document in an external editor |
 
 ## General keys

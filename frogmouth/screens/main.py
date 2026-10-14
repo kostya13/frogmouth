@@ -112,7 +112,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Binding("3", "focus_toc", "3: Contents", show=False),
         Binding("c", "table_of_contents", "Contents", show=False),
         Binding("t", "local_files", "Local", show=False),
-        Binding("h", "history", "History"),
+        Binding("n", "new_file", "New file", show=False),
         Binding("e", "edit", "Edit", show=False),
         Binding("ctrl+l", "local_files", "", show=False),
         Binding("ctrl+left", "backward", "", show=False),
@@ -537,9 +537,28 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
                 )
                 return
             target.touch()
+            # Refresh the tree node for the parent directory so the new
+            # file shows up in the tree.
+            tree = self.query_one(Navigation).query_one(FilteredDirectoryTree)
+            self._refresh_tree_node(tree, current.parent)
             self.visit(target)
             if open_for_editing:
                 editor = load_config().editor or getenv("EDITOR") or "vim"
                 self._run_editor(editor, target)
 
         self.app.push_screen(NewFileDialog(), callback=_create)
+
+    def _refresh_tree_node(self, tree: FilteredDirectoryTree, directory: Path) -> None:
+        """Refresh the node of the given directory in the tree.
+
+        Args:
+            tree: The tree to refresh the node in.
+            directory: The directory whose node to refresh.
+        """
+        stack = [tree.root]
+        while stack:
+            node = stack.pop()
+            if node.data is not None and Path(node.data.path) == directory:
+                tree.reload_node(node)
+                return
+            stack.extend(node.children)

@@ -517,7 +517,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             self.query_one(Viewer).reload()
 
     def action_new_file(self) -> None:
-        """Create a new Markdown file."""
+        """Create a new Markdown file or directory."""
         current = self.query_one(Viewer).location
         if not isinstance(current, Path):
             self.app.push_screen(
@@ -529,16 +529,32 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             )
             return
 
-        def _create(request: tuple[str, bool] | None) -> None:
-            """Create the new file from the dialog's response.
+        def _create(request: tuple[str, str, bool] | None) -> None:
+            """Create the file or directory from the dialog's response.
 
             Args:
-                request: The file name and the open-for-editing choice, or
-                    `None` if the dialog was cancelled.
+                request: The kind of thing to create, the name for it, and
+                    the open-for-editing choice, or `None` if the dialog
+                    was cancelled.
             """
             if request is None:
                 return
-            name, open_for_editing = request
+            kind, name, open_for_editing = request
+            tree = self.query_one(Navigation).query_one(FilteredDirectoryTree)
+            if kind == "directory":
+                target = current.parent / name
+                if target.exists():
+                    self.app.push_screen(
+                        ErrorDialog(
+                            "Directory exists",
+                            f"'{target.name}' already exists in "
+                            f"'{current.parent}'.",
+                        )
+                    )
+                    return
+                target.mkdir()
+                self._refresh_tree_node(tree, current.parent)
+                return
             target = current.parent / f"{name}.md"
             if target.exists():
                 self.app.push_screen(
@@ -552,7 +568,6 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             target.touch()
             # Refresh the tree node for the parent directory so the new
             # file shows up in the tree.
-            tree = self.query_one(Navigation).query_one(FilteredDirectoryTree)
             self._refresh_tree_node(tree, current.parent)
             if open_for_editing:
                 # Edit first, then visit; visiting first would have the

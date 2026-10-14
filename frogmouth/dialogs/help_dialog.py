@@ -29,7 +29,7 @@ Welcome to {APPLICATION_TITLE} Help!
 | `Escape` | Hide the navigation / quit |
 | `Ctrl+o` | Show/hide the navigation |
 | `Ctrl+l` | Show the local file browser |
-| `Ctrl+n` | Create a new Markdown file |
+| `Ctrl+n` | Create a new Markdown file or directory |
 | `Ctrl+t` | Show the table of contents |
 | `Ctrl+left` | Go backward in history |
 | `Ctrl+right` | Go forward in history |
@@ -38,7 +38,7 @@ Welcome to {APPLICATION_TITLE} Help!
 | `h` | Show the history dialog |
 | `+` | Expand the whole local file tree |
 | `_` | Collapse the whole local file tree |
-| `n` | Create a new Markdown file |
+| `n` | Create a new Markdown file or directory |
 | `d`/`Ctrl+d` | Delete the file under the cursor in the tree |
 | `e` | Edit the current document in an external editor |
 

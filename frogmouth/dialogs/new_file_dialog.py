@@ -26,18 +26,18 @@ class NewFileDialog(ModalScreen[tuple[str, str, bool]]):
     NewFileDialog > Vertical {
         background: $panel;
         height: auto;
-        width: auto;
+        width: 50%;
         border: thick $primary;
     }
 
     NewFileDialog > Vertical > * {
-        width: auto;
+        width: 100%;
         height: auto;
     }
 
     NewFileDialog Input {
-        width: 40;
-        margin: 1;
+        width: 1fr;
+        margin: 1 2;
     }
 
     NewFileDialog Label {

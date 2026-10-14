@@ -44,6 +44,9 @@
   added automatically), optionally open the file in the editor; the file
   is created next to the currently open document. Showing/hiding the
   navigation moved to `ctrl+o`.
+- File deletion on `d`/`ctrl+d`: delete the file under the cursor in
+  the local files tree, with a confirmation dialog; the tree refreshes
+  afterwards.
 - The history is now a dialog on `h`/`ctrl+y`: pick a location to visit
   it; `delete` removes an entry, `backspace` clears the history.
   The navigation sidebar is now just the local files tree.

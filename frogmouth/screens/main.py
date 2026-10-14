@@ -19,7 +19,13 @@ from textual.screen import Screen
 from textual.widgets import Footer, Markdown
 
 from ..data import load_config, load_history, save_config, save_history
-from ..dialogs import ErrorDialog, HelpDialog, HistoryDialog, NewFileDialog
+from ..dialogs import (
+    ErrorDialog,
+    HelpDialog,
+    HistoryDialog,
+    NewFileDialog,
+    YesNoDialog,
+)
 from ..utility import is_likely_url, maybe_markdown
 from ..utility.advertising import APPLICATION_TITLE, PACKAGE_NAME
 from ..widgets import Navigation, Pathbar, Viewer
@@ -112,8 +118,9 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Binding("3", "focus_toc", "3: Contents", show=False),
         Binding("c", "table_of_contents", "Contents", show=False),
         Binding("t", "local_files", "Local", show=False),
-        Binding("n", "new_file", "New file", show=False),
+        Binding("d", "delete_file", "Delete", show=False),
         Binding("e", "edit", "Edit", show=False),
+        Binding("ctrl+d", "delete_file", "Delete file"),
         Binding("ctrl+l", "local_files", "", show=False),
         Binding("ctrl+left", "backward", "", show=False),
         Binding("ctrl+right", "forward", "", show=False),
@@ -553,6 +560,47 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             self.visit(target)
 
         self.app.push_screen(NewFileDialog(), callback=_create)
+
+    def action_delete_file(self) -> None:
+        """Delete the file under the cursor in the local files tree."""
+        node = self.query_one(Navigation).query_one(FilteredDirectoryTree).cursor_node
+        path = getattr(node.data, "path", None) if node is not None else None
+        if path is None or not path.is_file():
+            return
+
+        def _delete(confirmed: bool) -> None:
+            """Delete the file once confirmed.
+
+            Args:
+                confirmed: Did the user confirm the deletion?
+            """
+            if not confirmed:
+                return
+            try:
+                path.unlink()
+            except OSError as error:
+                self.app.push_screen(
+                    ErrorDialog("Error deleting file", f"{path}\n\n{error}.")
+                )
+                return
+            tree = self.query_one(Navigation).query_one(FilteredDirectoryTree)
+            self._refresh_tree_node(tree, path.parent)
+            if self.query_one(Viewer).location == path:
+                # The deleted file is on show; drop back to the parent
+                # directory's listing by visiting nothing useful - just
+                # clear the viewer.
+                self.query_one(Viewer).show("")
+
+        self.app.push_screen(
+            YesNoDialog(
+                "Delete file",
+                f"Are you sure you want to delete '{path.name}'?",
+                yes_label="Delete",
+                no_label="Keep",
+                yes_first=False,
+            ),
+            callback=_delete,
+        )
 
     def _refresh_tree_node(self, tree: FilteredDirectoryTree, directory: Path) -> None:
         """Refresh the node of the given directory in the tree.

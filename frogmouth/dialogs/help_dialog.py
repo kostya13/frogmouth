@@ -40,6 +40,7 @@ Welcome to {APPLICATION_TITLE} Help!
 | `+` | Expand the whole local file tree |
 | `_` | Collapse the whole local file tree |
 | `n` | Create a new Markdown file |
+| `d`/`Ctrl+d` | Delete the file under the cursor in the tree |
 | `e` | Edit the current document in an external editor |
 
 ## General keys

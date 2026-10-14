@@ -8,6 +8,7 @@ from subprocess import run as run_process
 from functools import partial
 from pathlib import Path
 from typing import Awaitable, Callable
+from webbrowser import open as open_url
 
 from httpx import URL
 from textual.app import ComposeResult

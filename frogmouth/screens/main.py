@@ -523,6 +523,15 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         directory itself) under the cursor in the local files tree; the
         document being viewed doesn't matter.
         """
+        if not isinstance(self.app.focused, FilteredDirectoryTree):
+            self.app.push_screen(
+                ErrorDialog(
+                    "Tree panel is not active",
+                    "Focus the file tree first (key '1' or 't') and put "
+                    "the cursor where the new file should be created.",
+                )
+            )
+            return
         node = self.query_one(Navigation).query_one(FilteredDirectoryTree).cursor_node
         path = getattr(node.data, "path", None) if node is not None else None
         if path is None:
@@ -535,6 +544,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             )
             return
         parent = path if path.is_dir() else path.parent
+
 
         def _create(request: tuple[str, str, bool] | None) -> None:
             """Create the file or directory from the dialog's response.

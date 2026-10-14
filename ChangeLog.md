@@ -47,9 +47,10 @@
   the directory of the file (or inside the directory) under the cursor
   in the file tree, and the tree refreshes. Showing/hiding
   the navigation moved to `ctrl+o`.
-- File deletion on `d`/`ctrl+d`: delete the file under the cursor in
-  the local files tree, with a confirmation dialog; the tree refreshes
-  afterwards.
+- File and empty directory deletion on `d`/`ctrl+d`: delete the item
+  under the cursor in the local files tree, with a confirmation dialog;
+  deleting a non-empty directory is refused with a warning. The tree
+  refreshes afterwards.
 - The history is now a dialog on `h`/`ctrl+y`: pick a location to visit
   it; `delete` removes an entry, `backspace` clears the history.
   The navigation sidebar is now just the local files tree.

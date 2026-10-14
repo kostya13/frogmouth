@@ -596,14 +596,26 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         self.app.push_screen(NewFileDialog(), callback=_create)
 
     def action_delete_file(self) -> None:
-        """Delete the file under the cursor in the local files tree."""
+        """Delete the file or empty directory under the cursor in the tree."""
         node = self.query_one(Navigation).query_one(FilteredDirectoryTree).cursor_node
         path = getattr(node.data, "path", None) if node is not None else None
-        if path is None or not path.is_file():
+        if path is None:
+            return
+        if path.is_dir():
+            if any(path.iterdir()):
+                self.app.push_screen(
+                    ErrorDialog(
+                        "Directory not empty",
+                        f"'{path}' still has contents; only empty "
+                        "directories can be deleted.",
+                    )
+                )
+                return
+        elif not path.is_file():
             return
 
         def _delete(confirmed: bool) -> None:
-            """Delete the file once confirmed.
+            """Delete the file or directory once confirmed.
 
             Args:
                 confirmed: Did the user confirm the deletion?
@@ -611,7 +623,10 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             if not confirmed:
                 return
             try:
-                path.unlink()
+                if path.is_dir():
+                    path.rmdir()
+                else:
+                    path.unlink()
             except OSError as error:
                 self.app.push_screen(
                     ErrorDialog("Error deleting file", f"{path}\n\n{error}.")
@@ -627,7 +642,7 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
 
         self.app.push_screen(
             YesNoDialog(
-                "Delete file",
+                "Delete directory" if path.is_dir() else "Delete file",
                 f"Are you sure you want to delete '{path.name}'?",
                 yes_label="Delete",
                 no_label="Keep",

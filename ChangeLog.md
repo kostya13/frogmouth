@@ -40,6 +40,10 @@
   separate panel docked on the right, 20 characters wide; it updates as
   documents are opened and `c`/`ctrl+t` focus it.
 - The navigation sidebar has no padding.
+- New file creation on `ctrl+n`: enter a name (the `.md` extension is
+  added automatically), optionally open the file in the editor; the file
+  is created next to the currently open document. Showing/hiding the
+  navigation moved to `ctrl+o`.
 - The history is now a dialog on `h`/`ctrl+y`: pick a location to visit
   it; `delete` removes an entry, `backspace` clears the history.
   The navigation sidebar is now just the local files tree.

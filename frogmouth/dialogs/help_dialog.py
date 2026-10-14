@@ -27,8 +27,9 @@ Welcome to {APPLICATION_TITLE} Help!
 | Key | Command |
 | -- | -- |
 | `Escape` | Hide the navigation / quit |
-| `Ctrl+n` | Show/hide the navigation |
+| `Ctrl+o` | Show/hide the navigation |
 | `Ctrl+l` | Show the local file browser |
+| `Ctrl+n` | Create a new Markdown file |
 | `Ctrl+t` | Show the table of contents |
 | `Ctrl+y` | Show the history dialog |
 | `Ctrl+left` | Go backward in history |

@@ -19,7 +19,7 @@ from textual.screen import Screen
 from textual.widgets import Footer, Markdown
 
 from ..data import load_config, load_history, save_config, save_history
-from ..dialogs import ErrorDialog, HelpDialog, HistoryDialog
+from ..dialogs import ErrorDialog, HelpDialog, HistoryDialog, NewFileDialog
 from ..utility import is_likely_url, maybe_markdown
 from ..utility.advertising import APPLICATION_TITLE, PACKAGE_NAME
 from ..widgets import Navigation, Pathbar, Viewer
@@ -125,7 +125,8 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         Binding("f1", "help", "Help"),
         Binding("plus", "expand_tree", "", show=False),
         Binding("underscore", "collapse_tree", "", show=False),
-        Binding("ctrl+n", "navigation", "Navigation"),
+        Binding("ctrl+o", "navigation", "Navigation"),
+        Binding("ctrl+n", "new_file", "New file"),
         Binding("ctrl+q", "app.quit", "Quit"),
         Binding("f10", "toggle_theme", "", show=False),
     ]
@@ -481,13 +482,64 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
                 )
             )
             return
-
         # Work out the editor command: the configuration takes priority, and
         # after that we fall back to $EDITOR, and then to vim.
         editor = load_config().editor or getenv("EDITOR") or "vim"
 
         # Hand the terminal over to the editor, then reload the document in
         # case the user changed it.
+        self._run_editor(editor, location)
+
+    def _run_editor(self, editor: str, location: Path) -> None:
+        """Run the editor on the given location.
+
+        Args:
+            editor: The command to use to edit the file.
+            location: The file to edit.
+        """
+        # Hand the terminal over to the editor, then reload the document in
+        # case the user changed it.
         with self.app.suspend():
             run_process([*shlex_split(editor), str(location)])
         self.query_one(Viewer).reload()
+
+    def action_new_file(self) -> None:
+        """Create a new Markdown file."""
+        current = self.query_one(Viewer).location
+        if not isinstance(current, Path):
+            self.app.push_screen(
+                ErrorDialog(
+                    "No target directory",
+                    "There's no local file open, so there's no directory to "
+                    "create the new file in.",
+                )
+            )
+            return
+
+        def _create(request: tuple[str, bool] | None) -> None:
+            """Create the new file from the dialog's response.
+
+            Args:
+                request: The file name and the open-for-editing choice, or
+                    `None` if the dialog was cancelled.
+            """
+            if request is None:
+                return
+            name, open_for_editing = request
+            target = current.parent / f"{name}.md"
+            if target.exists():
+                self.app.push_screen(
+                    ErrorDialog(
+                        "File exists",
+                        f"'{target.name}' already exists in "
+                        f"'{current.parent}'.",
+                    )
+                )
+                return
+            target.touch()
+            self.visit(target)
+            if open_for_editing:
+                editor = load_config().editor or getenv("EDITOR") or "vim"
+                self._run_editor(editor, target)
+
+        self.app.push_screen(NewFileDialog(), callback=_create)

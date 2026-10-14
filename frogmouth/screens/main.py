@@ -490,18 +490,22 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
         # case the user changed it.
         self._run_editor(editor, location)
 
-    def _run_editor(self, editor: str, location: Path) -> None:
+    def _run_editor(
+        self, editor: str, location: Path, reload_after: bool = True
+    ) -> None:
         """Run the editor on the given location.
 
         Args:
             editor: The command to use to edit the file.
             location: The file to edit.
+            reload_after: Reload the document in the viewer afterwards?
         """
         # Hand the terminal over to the editor, then reload the document in
         # case the user changed it.
         with self.app.suspend():
             run_process([*shlex_split(editor), str(location)])
-        self.query_one(Viewer).reload()
+        if reload_after:
+            self.query_one(Viewer).reload()
 
     def action_new_file(self) -> None:
         """Create a new Markdown file."""
@@ -541,10 +545,12 @@ class Main(Screen[None]):  # pylint:disable=too-many-public-methods
             # file shows up in the tree.
             tree = self.query_one(Navigation).query_one(FilteredDirectoryTree)
             self._refresh_tree_node(tree, current.parent)
-            self.visit(target)
             if open_for_editing:
+                # Edit first, then visit; visiting first would have the
+                # editor suspend race with the document loading.
                 editor = load_config().editor or getenv("EDITOR") or "vim"
-                self._run_editor(editor, target)
+                self._run_editor(editor, target, reload_after=False)
+            self.visit(target)
 
         self.app.push_screen(NewFileDialog(), callback=_create)
 
